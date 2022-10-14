@@ -1,0 +1,13 @@
+.Rproj.user
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+.RProfile
+.Renviron
+.Renvironment
+.DS_Store
+1_fetch/in/*
+!1_fetch/in/Shapefiles_220721/.placeholder
+!1_fetch/in/states_shp/.placeholder
+!1_fetch/in/Vizlab-saline_lakes_spatial_data/.placeholder
