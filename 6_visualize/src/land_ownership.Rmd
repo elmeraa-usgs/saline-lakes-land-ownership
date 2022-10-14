@@ -1,0 +1,329 @@
+---
+title: "Land Ownership"
+output: html_document
+date: "2022-10-11"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load_lbs, echo = FALSE, message = FALSE, warnings = FALSE}
+library(tidyverse)
+library(here)
+library(leaflet)
+library(scico)
+library(scales)
+library(sf)
+library(ggmap)
+library(ggspatial)
+library(rnaturalearthdata)
+library(rnaturalearth)
+library(ggsn)
+```
+
+# Read in watershed extents
+```{r}
+watershed_ext <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds.shp')) 
+watershed_ext_5070 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds_5070.shp')) 
+watershed_ext_huc10 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds_by_huc10.shp'))
+watershed_ext_huc10_5070 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds_by_huc10_5070.shp')) 
+```
+
+# Read in lake shapefiles
+```{r}
+saline_lakes <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/saline_lakes/saline_lakes.shp')) 
+saline_lakes_5070 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/saline_lakes/saline_lakes_5070.shp')) 
+```
+
+# Read in Great Basin Dessert Band
+```{r}
+gbd_bnd <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/GreatBasinDessertBnd_220721/GreatBasinDessertBnd.shp')) %>% 
+  st_transform(crs=st_crs(saline_lakes_5070))
+```
+
+# Read in PAD/land ownership data
+```{r}
+pad <- st_read(here('1_fetch/in/Shapefiles_220721/PADUS_3_0VA.shp')) %>% 
+  st_transform(crs=st_crs(saline_lakes_5070)) %>% 
+  select(OBJECTI, Mng_Typ, Mang_Nm, Unit_Nm, GIS_Acr, MngTp_D, MngNm_D, BndryNm, ST_Name)
+```
+# Read in states layer
+```{r}
+states <- st_read(here('1_fetch/in/states_shp/statesp010g.shp')) %>% 
+  st_transform(crs=st_crs(saline_lakes_5070))
+```
+
+# Intersect `pad` to each of `gbd_bnd, `saline_lakes_5070`, and `watershed_ext_5070`/ `watershed_ext_huc10_5070`
+```{r}
+gbd_pad_int <- st_intersection(pad, gbd_bnd) 
+saline_lakes_5070_pad_int <- st_intersection(pad, saline_lakes_5070)
+watershed_ext_huc10_5070_pad_int <- st_intersection(pad, watershed_ext_huc10_5070)
+watershed_ext_5070_pad_int <- st_intersection(pad, watershed_ext_5070)
+
+```
+
+# add in an area count column to the dfs
+```{r}
+gbd_pad_int$area <- st_area(gbd_pad_int$geometry)
+saline_lakes_5070_pad_int$area <- st_area(saline_lakes_5070_pad_int$geometry)
+watershed_ext_huc10_5070_pad_int$area <- st_area(watershed_ext_huc10_5070_pad_int$geometry)
+watershed_ext_5070_pad_int$area <- st_area(watershed_ext_5070_pad_int$geometry)
+
+# plot the layers to visually check result of intersect
+plot(gbd_pad_int$geometry, col='green')
+plot(pad$geometry)
+plot(gbd_pad_int$geometry, col='red')
+
+```
+
+# group data by Mng_Typ and calculate the total land area per Mng_Typ
+```{r}
+gbdByMng <- gbd_pad_int %>%
+  group_by(Mng_Typ) %>%
+  summarise(areaMng_Typ = sum(area))
+
+# change data type of areaMng_Typ field to numeric (from 'S3: units' with m^2 suffix)
+gbdByMng$areaMng_Typ <- as.numeric(gbdByMng$areaMng_Typ)
+
+salineLakes5070ByMng <- saline_lakes_5070_pad_int %>%
+  group_by(Mng_Typ, GNIS_Nm) %>%
+  summarise(areaMng_Typ = sum(area))
+
+salineLakes5070ByMng$areaMng_Typ <- as.numeric(salineLakes5070ByMng$areaMng_Typ)
+
+watershedExtHuc10_5070ByMng <- watershed_ext_huc10_5070_pad_int %>%
+  group_by(Mng_Typ, HUC10_N) %>%
+  summarise(areaMng_Typ = sum(area))
+
+watershedExtHuc10_5070ByMng$areaMng_Typ <- as.numeric(watershedExtHuc10_5070ByMng$areaMng_Typ)
+
+watershedExt5070ByMng <- watershed_ext_5070_pad_int %>%
+  group_by(Mng_Typ, lk_w_st) %>%
+  summarise(areaMng_Typ = sum(area))
+
+watershedExt5070ByMng$areaMng_Typ <- as.numeric(watershedExt5070ByMng$areaMng_Typ)
+```
+
+# group data by MngNm_D and calculate the total land area per MngNm_D (more detailed Manamgement Types)
+```{r}
+gbdByMngNm <- gbd_pad_int %>%
+  group_by(MngNm_D) %>%
+  summarise(areaMngNm_Typ = sum(area))
+
+# change data type of areaMng_Typ field to numeric (from 'S3: units' with m^2 suffix)
+gbdByMngNm$areaMngNm_Typ <- as.numeric(gbdByMngNm$areaMngNm_Typ)
+
+salineLakes5070ByMngNm <- saline_lakes_5070_pad_int %>%
+  group_by(MngNm_D, GNIS_Nm) %>%
+  summarise(areaMngNm_Typ = sum(area))
+
+salineLakes5070ByMngNm$areaMngNm_Typ <- as.numeric(salineLakes5070ByMngNm$areaMngNm_Typ)
+
+watershedExtHuc10_5070ByMngNm <- watershed_ext_huc10_5070_pad_int %>%
+  group_by(MngNm_D, HUC10_N) %>%
+  summarise(areaMngNm_Typ = sum(area))
+
+watershedExtHuc10_5070ByMngNm$areaMngNm_Typ <- as.numeric(watershedExtHuc10_5070ByMngNm$areaMngNm_Typ)
+
+watershedExt5070ByMngNm <- watershed_ext_5070_pad_int %>%
+  group_by(MngNm_D, lk_w_st) %>%
+  summarise(areaMngNm_Typ = sum(area))
+
+watershedExt5070ByMngNm$areaMngNm_Typ <- as.numeric(watershedExt5070ByMngNm$areaMngNm_Typ)
+```
+
+
+# Plot 
+```{r}
+ggplot(data = gbdByMngNm%>% st_transform(crs=st_crs(saline_lakes))) +
+  geom_sf(aes(fill = MngNm_D))
+
+ggplot(data = salineLakes5070ByMng) +
+  geom_sf(aes(fill = Mng_Typ))
+
+ggplot(data = watershedExtHuc10_5070ByMngNm_grp) +
+  geom_sf(aes(fill = MngGroup))
+
+ggplot(data = watershedExt5070ByMng) +
+  geom_sf(aes(fill = Mng_Typ))
+  
+```
+
+# Group some of the Management Type names to reduce colors needed 
+```{r}
+gbdByMngNm_grp <- gbdByMngNm %>% 
+  mutate(MngGroup = case_when(
+   MngNm_D == "American Indian Lands" ~ "Native American areas", 
+   MngNm_D == "Agricultural Research Service" ~ "Federal - other",
+    MngNm_D == "Army Corps of Engineers" ~ "Federal - other", 
+    MngNm_D == "Department of Energy" ~ "Federal - other",
+    MngNm_D == "Natural Resources Conservation Service" ~ "Federal - other", 
+    MngNm_D == "State Department of Conservation" ~ "State entities",
+    MngNm_D == "Other or Unknown State Land" ~ "State entities", 
+    MngNm_D == "State Park and Recreation" ~ "State entities",
+    MngNm_D == "State Department of Land" ~ "State entities",
+    MngNm_D == "State Fish and Wildlife" ~ "State entities", 
+    MngNm_D == "State Department of Natural Resources" ~ "State entities", 
+    MngNm_D == "State Land Board" ~ "State entities", 
+    MngNm_D == "Regional Agency Land" ~ "Regional entites",
+    MngNm_D == "County Land" ~ "Municipal entities",
+    MngNm_D == "City Land" ~ "Municipal entities", 
+    MngNm_D == "Non-Governmental Organization" ~ "NGO",
+    TRUE ~ MngNm_D
+  ))
+
+salineLakesByMngNm_grp <- salineLakes5070ByMngNm %>% 
+  mutate(MngGroup = case_when(
+   MngNm_D == "American Indian Lands" ~ "Native American areas", 
+   MngNm_D == "Agricultural Research Service" ~ "Federal - other",
+    MngNm_D == "Army Corps of Engineers" ~ "Federal - other", 
+    MngNm_D == "Department of Energy" ~ "Federal - other",
+    MngNm_D == "Natural Resources Conservation Service" ~ "Federal - other", 
+    MngNm_D == "State Department of Conservation" ~ "State entities",
+    MngNm_D == "Other or Unknown State Land" ~ "State entities", 
+    MngNm_D == "State Park and Recreation" ~ "State entities",
+    MngNm_D == "State Department of Land" ~ "State entities",
+    MngNm_D == "State Fish and Wildlife" ~ "State entities", 
+    MngNm_D == "State Department of Natural Resources" ~ "State entities", 
+    MngNm_D == "State Land Board" ~ "State entities", 
+    MngNm_D == "Regional Agency Land" ~ "Regional entites",
+    MngNm_D == "County Land" ~ "Municipal entities",
+    MngNm_D == "City Land" ~ "Municipal entities", 
+    MngNm_D == "Non-Governmental Organization" ~ "NGO",
+    TRUE ~ MngNm_D
+  ))
+
+watershedExtHuc10_5070ByMngNm_grp <- watershedExtHuc10_5070ByMngNm %>% 
+  mutate(MngGroup = case_when(
+   MngNm_D == "American Indian Lands" ~ "Native American areas", 
+   MngNm_D == "Agricultural Research Service" ~ "Federal - other",
+    MngNm_D == "Army Corps of Engineers" ~ "Federal - other", 
+    MngNm_D == "Department of Energy" ~ "Federal - other",
+    MngNm_D == "Natural Resources Conservation Service" ~ "Federal - other", 
+    MngNm_D == "State Department of Conservation" ~ "State entities",
+    MngNm_D == "Other or Unknown State Land" ~ "State entities", 
+    MngNm_D == "State Park and Recreation" ~ "State entities",
+    MngNm_D == "State Department of Land" ~ "State entities",
+    MngNm_D == "State Fish and Wildlife" ~ "State entities", 
+    MngNm_D == "State Department of Natural Resources" ~ "State entities", 
+    MngNm_D == "State Land Board" ~ "State entities", 
+    MngNm_D == "Regional Agency Land" ~ "Regional entites",
+    MngNm_D == "County Land" ~ "Municipal entities",
+    MngNm_D == "City Land" ~ "Municipal entities", 
+    MngNm_D == "Non-Governmental Organization" ~ "NGO",
+    TRUE ~ MngNm_D
+  ))
+```
+
+```{r}
+mapBound <- gbdByMngNm_grp %>% st_transform(crs=st_crs(4326)) %>% 
+  st_bbox() %>% st_as_sfc() %>% st_buffer(0.25) %>%
+  st_bbox() %>% as.numeric()
+
+man_basemap <- ggmap::get_stamenmap(bbox = mapBound, zoom = 6, messaging = FALSE, maptype = 'terrain-lines')
+
+manualcolors<-c('black','forestgreen', 'red2', 'orange', 'cornflowerblue', 'darkolivegreen4', 'indianred1', 'tan4', 'darkblue','firebrick4',  'yellowgreen', 'lightsalmon', 'tan3','darkgray', 'wheat4', 'moccasin', 'mediumvioletred','cadetblue1',
+                "darkolivegreen1" , "tomato3" , "#7CE3D8","gainsboro")
+
+greatBasin <- ggmap(man_basemap) +
+  # geom_sf(data = states %>% st_transform(4326),
+  #              aes(group = STATE_ABBR),
+  #         alpha = 0.8,
+  #         fill = NA,
+  #         color = "grey60", inherit.aes = FALSE)+
+  geom_sf(data = gbdByMngNm_grp %>% st_transform(4326), aes(fill = MngGroup, color = MngGroup), inherit.aes = FALSE) +
+  coord_sf(crs = st_crs(4326)) +
+scale_color_manual(values = manualcolors) +
+  scale_fill_manual(values = manualcolors) + 
+  labs(fill='Management Type') +
+  guides(color="none", 
+         fill = guide_legend(override.aes=list(linetype = 0))) + 
+  theme_void() +
+  theme(legend.position="bottom",
+        legend.title=element_blank()) +
+  annotation_north_arrow(location = "tr", which_north = "true", 
+                         pad_x = unit(0.2, "in"), pad_y = unit(0.15, "in"),
+                         height = unit(0.5, "in"), width= unit(0.2, "in"),
+                         style = north_arrow_orienteering(fill = c("black", "black"),
+                                                          line_col = "black",
+                                                          text_col = "black"))
+
+
+ggsave(here("6_visualize/out/greatBasin.png"), width = 10, height = 7, dpi = 500)
+```
+
+```{r}
+mapBound <- salineLakesByMngNm_grp %>% st_transform(crs=st_crs(4326)) %>% 
+  st_bbox() %>% st_as_sfc() %>% st_buffer(0.25) %>%
+  st_bbox() %>% as.numeric()
+
+man_basemap <- ggmap::get_stamenmap(bbox = mapBound, zoom = 7, messaging = FALSE, maptype = 'terrain-lines')
+
+salineLakes <- ggmap(man_basemap) +
+  # geom_sf(data = states %>% st_transform(4326),
+  #              aes(group = STATE_ABBR),
+  #         alpha = 0.3,
+  #         fill = NA,
+  #         color = "grey60", inherit.aes = FALSE,
+  #         linetype = "11", size = 0.8) +
+  geom_sf(data = salineLakesByMngNm_grp %>% st_transform(4326), aes(fill = MngGroup, color=MngGroup),
+          inherit.aes = FALSE) + 
+  coord_sf(crs = st_crs(4326)) + 
+scale_color_manual(values = manualcolors) +
+  scale_fill_manual(values = manualcolors) + 
+ labs(fill='Management Type') +
+  guides(color="none", 
+         fill = guide_legend(override.aes=list(linetype = 0))) +
+  theme_void() +
+  theme(legend.position="bottom",
+        legend.title=element_blank(),
+        legend.key = element_blank()) +
+  annotation_north_arrow(location = "tr", which_north = "true", 
+                         pad_x = unit(0.2, "in"), pad_y = unit(0.15, "in"),
+                         height = unit(0.5, "in"), width= unit(0.2, "in"),
+                         style = north_arrow_orienteering(fill = c("black", "black"),
+                                                          line_col = "black",
+                                                          text_col = "black"))
+
+ggsave(here("6_visualize/out/salineLakes.png"), width = 10, height = 7, dpi = 500)
+
+```
+
+```{r}
+mapBound <- watershedExtHuc10_5070ByMngNm_grp %>% st_transform(crs=st_crs(4326)) %>% 
+  st_bbox() %>% st_as_sfc() %>% st_buffer(0.25) %>%
+  st_bbox() %>% as.numeric()
+
+man_basemap <- ggmap::get_stamenmap(bbox = mapBound, zoom = 5, messaging = FALSE, maptype = 'terrain-lines')
+
+salineLakes <- ggmap(man_basemap) +
+  # geom_sf(data = states %>% st_transform(4326),
+  #              aes(group = STATE_ABBR),
+  #         alpha = 0.3,
+  #         fill = NA,
+  #         color = "grey60", inherit.aes = FALSE,
+  #         linetype = "11", size = 0.8) +
+  geom_sf(data = watershedExtHuc10_5070ByMngNm_grp %>% st_transform(4326), aes(fill = MngGroup, color=MngGroup),
+          inherit.aes = FALSE) + 
+  coord_sf(crs = st_crs(4326)) + 
+scale_color_manual(values = manualcolors) +
+  scale_fill_manual(values = manualcolors) + 
+ labs(fill='Management Type') +
+  guides(color="none", 
+         fill = guide_legend(override.aes=list(linetype = 0))) +
+  theme_void() +
+  theme(legend.position="bottom",
+        legend.title=element_blank(),
+        legend.key = element_blank()) +
+  annotation_north_arrow(location = "tr", which_north = "true", 
+                         pad_x = unit(0.2, "in"), pad_y = unit(0.15, "in"),
+                         height = unit(0.5, "in"), width= unit(0.2, "in"),
+                         style = north_arrow_orienteering(fill = c("black", "black"),
+                                                          line_col = "black",
+                                                          text_col = "black"))
+
+ggsave(here("6_visualize/out/watershedExtentHuc10.png"), width = 10, height = 7, dpi = 500)
+```
+
+
