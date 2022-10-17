@@ -22,34 +22,28 @@ library(rnaturalearth)
 library(ggsn)
 ```
 
-# Read in watershed extents
+# Read in all shapefiles
 ```{r}
+# Read in watershed extents
 watershed_ext <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds.shp')) 
 watershed_ext_5070 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds_5070.shp')) 
 watershed_ext_huc10 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds_by_huc10.shp'))
 watershed_ext_huc10_5070 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds_by_huc10_5070.shp')) 
-```
 
-# Read in lake shapefiles
-```{r}
+# saline lake 
 saline_lakes <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/saline_lakes/saline_lakes.shp')) 
 saline_lakes_5070 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/saline_lakes/saline_lakes_5070.shp')) 
-```
 
-# Read in Great Basin Dessert Band
-```{r}
+# Great Basin Dessert Band
 gbd_bnd <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/GreatBasinDessertBnd_220721/GreatBasinDessertBnd.shp')) %>% 
   st_transform(crs=st_crs(saline_lakes_5070))
-```
 
-# Read in PAD/land ownership data
-```{r}
+#PAD/land ownership 
 pad <- st_read(here('1_fetch/in/Shapefiles_220721/PADUS_3_0VA.shp')) %>% 
   st_transform(crs=st_crs(saline_lakes_5070)) %>% 
   select(OBJECTI, Mng_Typ, Mang_Nm, Unit_Nm, GIS_Acr, MngTp_D, MngNm_D, BndryNm, ST_Name)
-```
-# Read in states layer
-```{r}
+
+# states
 states <- st_read(here('1_fetch/in/states_shp/statesp010g.shp')) %>% 
   st_transform(crs=st_crs(saline_lakes_5070))
 ```
