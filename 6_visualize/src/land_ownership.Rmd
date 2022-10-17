@@ -295,7 +295,7 @@ mapBound <- watershedExtHuc10_5070ByMngNm_grp %>% st_transform(crs=st_crs(4326))
   st_bbox() %>% st_as_sfc() %>% st_buffer(0.25) %>%
   st_bbox() %>% as.numeric()
 
-man_basemap <- ggmap::get_stamenmap(bbox = mapBound, zoom = 5, messaging = FALSE, maptype = 'terrain-lines')
+man_basemap <- ggmap::get_stamenmap(bbox = mapBound, zoom = 6, messaging = FALSE, maptype = 'terrain-lines')
 
 salineLakes <- ggmap(man_basemap) +
   # geom_sf(data = states %>% st_transform(4326),
