@@ -20,40 +20,191 @@ library(ggspatial)
 library(rnaturalearthdata)
 library(rnaturalearth)
 library(ggsn)
+library(rmapshaper)
+library(terra)
+library(tidyterra)
+library(maptiles)
+
+
 ```
 
 # Read in all shapefiles
 ```{r}
+proj <- '+proj=aea +lat_0=31.3 +lon_0=-114.5 +lat_1=37.2 +lat_2=43.2 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs'
+
 # Read in watershed extents
-watershed_ext <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds.shp')) 
-watershed_ext_5070 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds_5070.shp')) 
-watershed_ext_huc10 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds_by_huc10.shp'))
-watershed_ext_huc10_5070 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds_by_huc10_5070.shp')) 
+watershed_ext <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds.shp')) |> st_transform(proj)
+#watershed_ext_5070 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds_5070.shp')) 
 
 # saline lake 
-saline_lakes <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/saline_lakes/saline_lakes.shp')) 
-saline_lakes_5070 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/saline_lakes/saline_lakes_5070.shp')) 
+saline_lakes <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/saline_lakes/saline_lakes.shp')) |> st_transform(proj)
+saline_lakes |> st_union()
+#saline_lakes_5070 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/saline_lakes/saline_lakes_5070.shp'))  
 
 # Great Basin Dessert Band
 gbd_bnd <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/GreatBasinDessertBnd_220721/GreatBasinDessertBnd.shp')) %>% 
-  st_transform(crs=st_crs(saline_lakes_5070))
+  st_transform(crs = proj) |> ms_simplify()
 
 #PAD/land ownership 
-pad <- st_read(here('1_fetch/in/Shapefiles_220721/PADUS_3_0VA.shp')) %>% 
-  st_transform(crs=st_crs(saline_lakes_5070)) %>% 
-  select(OBJECTI, Mng_Typ, Mang_Nm, Unit_Nm, GIS_Acr, MngTp_D, MngNm_D, BndryNm, ST_Name)
+pad <- st_read(here('1_fetch/in/Shapefiles_220721/PADUS_3_0VA.shp')) %>%  
+  st_transform(crs = proj) %>% 
+  select(OBJECTI, Mng_Typ, Mang_Nm, MngNm_L,Unit_Nm, GIS_Acr, MngTp_D, MngNm_D, BndryNm, ST_Name) |>
+  mutate(area = st_area(geometry))
+pad
 
 # states
 states <- st_read(here('1_fetch/in/states_shp/statesp010g.shp')) %>% 
-  st_transform(crs=st_crs(saline_lakes_5070))
+  st_transform(crs = proj) |>
+  ms_simplify()
 ```
 
-# Intersect `pad` to each of `gbd_bnd, `saline_lakes_5070`, and `watershed_ext_5070`/ `watershed_ext_huc10_5070`
+# Reduce complexity of spatial files for mapping purposes 
 ```{r}
-gbd_pad_int <- st_intersection(pad, gbd_bnd) 
-saline_lakes_5070_pad_int <- st_intersection(pad, saline_lakes_5070)
-watershed_ext_huc10_5070_pad_int <- st_intersection(pad, watershed_ext_huc10_5070)
-watershed_ext_5070_pad_int <- st_intersection(pad, watershed_ext_5070)
+# Aggregate PAD by major groupings
+pad_simp <- pad |> ms_simplify() |> st_buffer(0)
+pad_agg <- pad_simp |> 
+  group_by(Mng_Typ, Mang_Nm, MngTp_D, MngNm_D, MngNm_L, Unit_Nm, ST_Name) |> 
+  summarize() 
+pad_agg
+
+## total area of gdba
+
+gbd_bnd |> 
+  ggplot() +
+  geom_sf(fill = NA) + 
+  geom_sf(data = pad_agg, fill = NA, color = 'pink', alpha = 0.5) +
+  theme_void()
+
+```
+
+# Intersect `pad` to each of `gbd_bnd`, `saline_lakes`, and `watershed_ext` 
+```{r}
+
+## total area
+gbd_area <- gbd_bnd |>
+  st_union() |>
+  st_area()
+
+gbd_pad_int <- gbd_bnd |> 
+  st_intersection(pad_agg) |> 
+  st_buffer(0) |>
+  mutate(Mng_level = case_when(
+    Mng_Typ == 'FED' ~ 'Federal',
+    Mng_Typ == 'NGO' ~ 'NGO',
+    Mng_Typ %in% c('PVT','UNK') ~ 'Private or Unknown',
+    Mng_Typ %in% c('LOC','STAT', 'DIST', 'JNT') ~ 'State/Regional/Local',
+    Mng_Typ == 'TRIB' ~ 'Tribal Land',
+    TRUE ~ Mng_Typ
+  )) |>
+  mutate(area_perc = 100*(st_area(geometry)/gbd_area))
+
+gbd_mng_total <- gbd_pad_int |>
+  st_drop_geometry() |>
+  group_by(Mng_Typ) |>
+  summarize(total = as.numeric(sum(area_perc))) |>
+  arrange(desc(total))
+
+gbd_cat_total <- gbd_pad_int |>
+  st_drop_geometry() |>
+  group_by(Mng_Typ) |>
+  summarize(total = as.numeric(sum(area_perc))) |>
+  arrange(desc(total))
+
+gbd_plot <- gbd_pad_int |>
+  left_join(gbd_mng_total)
+gbd_plot
+
+gbd_mng_total |>
+  ggplot(aes(total, Mng_Typ)) +
+  geom_bar(stat = 'identity')
+
+
+watershed_ext_pad_int <- watershed_ext |> 
+  st_intersection(pad_agg) |> 
+  st_buffer(0) |> 
+  mutate(Mng_level = case_when(
+    Mng_Typ == 'FED' ~ 'Federal',
+    Mng_Typ == 'NGO' ~ 'NGO',
+    Mng_Typ %in% c('PVT','UNK') ~ 'Private or Unknown',
+    Mng_Typ %in% c('LOC','STAT', 'DIST', 'JNT') ~ 'State/Regional/Local',
+    Mng_Typ == 'TRIB' ~ 'Tribal Land',
+    TRUE ~ Mng_Typ
+  ))
+str(gbd_pad_int)
+```
+```{r}
+# basemap
+us <- c(left = -125, bottom = 30, right = -105, top = 45)
+basemap <- get_stamenmap(us, zoom = 7, maptype = "terrain-background", 
+                   color = 'bw', force = TRUE) #%>% 
+
+pad_grps <- gbd_pad_int |>
+  distinct(Mng_Typ, Mang_Nm, MngNm_D,MngNm_L)
+pad_grps |> View()
+
+unique(gbd_pad_int$MngNm_L)
+
+states_sf <- states |> 
+  filter(NAME %in% c('California','Nevada', 'Utah','Oregon', 'Idaho', 'Arizona','Washington','Wyoming'))
+states_crop <- states |> st_crop(gbd_bnd |> st_buffer(70*1000))
+
+pal_land <- tibble(MngTp_D = unique(gbd_pad_int$MngTp_D),
+                   color = c('white'))
+
+basemap <- get_tiles(x = states_crop, provider = "CartoDB.PositronNoLabels", crop = T, verbose = T, zoom = 7, forceDownload = T)
+basemap
+
+```
+
+```{r}
+## Land ownership by management level, and broken down
+
+## for gdba
+gbd_mg <- gbd_pad_int |> 
+  mutate(Mng_level = case_when(
+    Mng_Typ == 'FED' ~ 'Federal',
+    Mng_Typ == 'NGO' ~ 'NGO',
+    Mng_Typ %in% c('PVT','UNK') ~ 'Private or Unknown',
+    Mng_Typ %in% c('LOC','STAT', 'DIST', 'JNT') ~ 'State/Regional/Local',
+    Mng_Typ == 'TRIB' ~ 'Tribal Land',
+    TRUE ~ Mng_Typ
+  )) |>
+  group_by(Mng_level, MngNm_D) |>
+  summarize(area = st_area(MngNm_D))
+
+## total area by level and subcategory
+
+
+```
+# Plot land ownership map of Great Bsain Desert Area
+```{r, fig.width = 10, fig.height = 10}
+
+gbd_pad_int |> pull(MngNm_D) |> unique()
+
+salin
+
+gbd_mg |>
+  ggplot() +
+  geom_spatraster_rgb(data = basemap) +
+  #geom_sf(data = states_sf, fill = NA, color = 'grey') +
+  #geom_sf(data = gbd_bnd, fill = NA, color = 'black') +
+  geom_sf(
+    aes(fill = Mng_level),
+    color = NA
+  ) +
+  geom_sf(data = saline_lakes|> st_union(), color = 'white', fill = 'white', alpha = 0.4) +
+  theme_void() +
+  theme(plot.background = element_rect(fill = 'white', color = NA),
+        legend.position = 'bottom') +
+  scale_fill_scico_d(palette = 'bamako', direction = -1) +
+  #scale_fill_manual(values = scico(n = 7, palette = 'bamako')[c(3,6,4,1,5)]) +
+  guides(fill = guide_legend(
+    title = 'Land Ownership',
+    title.theme = element_text(face = 'bold'),
+    direction = 'horizontal'
+  ))
+
+ggsave('land_GreatDesertBasinArea.png', width = 8, height = 8)
 
 ```
 
@@ -128,7 +279,7 @@ watershedExt5070ByMngNm$areaMngNm_Typ <- as.numeric(watershedExt5070ByMngNm$area
 ```
 
 
-# Plot 
+# Map of land ownership
 ```{r}
 ggplot(data = gbdByMngNm%>% st_transform(crs=st_crs(saline_lakes))) +
   geom_sf(aes(fill = MngNm_D))
@@ -188,26 +339,7 @@ salineLakesByMngNm_grp <- salineLakes5070ByMngNm %>%
     TRUE ~ MngNm_D
   ))
 
-watershedExtHuc10_5070ByMngNm_grp <- watershedExtHuc10_5070ByMngNm %>% 
-  mutate(MngGroup = case_when(
-   MngNm_D == "American Indian Lands" ~ "Native American areas", 
-   MngNm_D == "Agricultural Research Service" ~ "Federal - other",
-    MngNm_D == "Army Corps of Engineers" ~ "Federal - other", 
-    MngNm_D == "Department of Energy" ~ "Federal - other",
-    MngNm_D == "Natural Resources Conservation Service" ~ "Federal - other", 
-    MngNm_D == "State Department of Conservation" ~ "State entities",
-    MngNm_D == "Other or Unknown State Land" ~ "State entities", 
-    MngNm_D == "State Park and Recreation" ~ "State entities",
-    MngNm_D == "State Department of Land" ~ "State entities",
-    MngNm_D == "State Fish and Wildlife" ~ "State entities", 
-    MngNm_D == "State Department of Natural Resources" ~ "State entities", 
-    MngNm_D == "State Land Board" ~ "State entities", 
-    MngNm_D == "Regional Agency Land" ~ "Regional entites",
-    MngNm_D == "County Land" ~ "Municipal entities",
-    MngNm_D == "City Land" ~ "Municipal entities", 
-    MngNm_D == "Non-Governmental Organization" ~ "NGO",
-    TRUE ~ MngNm_D
-  ))
+
 ```
 
 ```{r}
