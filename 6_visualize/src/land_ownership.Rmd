@@ -20,137 +20,111 @@ library(ggspatial)
 library(rnaturalearthdata)
 library(rnaturalearth)
 library(ggsn)
-
+library(rmapshaper)
+library(maptiles)
+library(tidyterra)
 ```
 
 # Read in all shapefiles
 ```{r}
+proj <- '+proj=aea +lat_0=35 +lon_0=-117 +lat_1=37.3 +lat_2=39.7 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs'
+
 # Read in watershed extents
-watershed_ext <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds.shp')) 
-watershed_ext_5070 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds_5070.shp')) 
-watershed_ext_huc10 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds_by_huc10.shp'))
-watershed_ext_huc10_5070 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds_by_huc10_5070.shp')) 
+watershed_ext <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/Saline_lake_watershed_extents/lake_watersheds.shp')) %>% 
+  st_transform(crs=proj)
 
 # saline lake 
-saline_lakes <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/saline_lakes/saline_lakes.shp')) 
-saline_lakes_5070 <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/saline_lakes/saline_lakes_5070.shp')) 
+saline_lakes <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/saline_lakes/saline_lakes.shp')) %>% 
+  st_transform(crs=proj)
 
 # Great Basin Dessert Band
 gbd_bnd <- st_read(here('1_fetch/in/Vizlab-saline_lakes_spatial_data/GreatBasinDessertBnd_220721/GreatBasinDessertBnd.shp')) %>% 
-  st_transform(crs=st_crs(saline_lakes_5070))
+  st_transform(crs=proj) |>
+  ms_simplify()
 
 #PAD/land ownership 
 pad <- st_read(here('1_fetch/in/Shapefiles_220721/PADUS_3_0VA.shp')) %>% 
-  st_transform(crs=st_crs(saline_lakes_5070)) %>% 
-  select(OBJECTI, Mng_Typ, Mang_Nm, Unit_Nm, GIS_Acr, MngTp_D, MngNm_D, BndryNm, ST_Name)
+  st_transform(crs=proj) %>% 
+  select(OBJECTI, Mng_Typ, Mang_Nm, Unit_Nm, GIS_Acr, MngTp_D, MngNm_D, MngNm_L, BndryNm, ST_Name) |>
+  mutate(Mng_Level = case_when(
+    Mng_Typ == 'FED' ~ 'Federal',
+    Mng_Typ %in% c('LOC', 'STAT', 'DIST', 'JNT') ~ 'Regional/State/Local',
+    Mng_Typ %in% c('PVT','UNK') ~ 'Private or Unknown',
+    Mng_Typ == 'NGO' ~ 'NGO',
+    Mng_Typ == 'TRIB' ~ 'Tribal Land'
+  ))
 
 # states
 states <- st_read(here('1_fetch/in/states_shp/statesp010g.shp')) %>% 
-  st_transform(crs=st_crs(saline_lakes_5070))
+  st_transform(crs=proj) |>
+  ms_simplify()
 ```
 
-# Intersect `pad` to each of `gbd_bnd, `saline_lakes_5070`, and `watershed_ext_5070`/ `watershed_ext_huc10_5070`
+# Intersect `pad` to each of `gbd_bnd, `saline_lakes`, and `watershed_ext`
 ```{r}
-gbd_pad_int <- gbd_bnd |> st_intersection(pad) 
-saline_lakes_5070_pad_int <- saline_lakes_5070 |> st_intersection(pad)
-watershed_ext_huc10_5070_pad_int <- watershed_ext_huc10_5070 |> st_intersection(pad)
-watershed_ext_5070_pad_int <- watershed_ext_5070 |> st_intersection(pad)
-```
 
 # add in an area count column to the dfs
-```{r}
-gbd_pad_int$area <- st_area(gbd_pad_int$geometry)
-saline_lakes_5070_pad_int$area <- st_area(saline_lakes_5070_pad_int$geometry)
-watershed_ext_huc10_5070_pad_int$area <- st_area(watershed_ext_huc10_5070_pad_int$geometry)
-watershed_ext_5070_pad_int$area <- st_area(watershed_ext_5070_pad_int$geometry)
+gbd_pad_int <- gbd_bnd |> 
+  st_intersection(pad) |>
+  mutate(area = st_area(geometry))
 
-# plot the layers to visually check result of intersect
-plot(gbd_pad_int$geometry, col='green')
-plot(pad$geometry)
-plot(gbd_pad_int$geometry, col='red')
+saline_lakes_pad_int <- saline_lakes |> 
+  st_intersection(pad) |>
+  mutate(area = st_area(geometry))
 
+watershed_ext_pad_int <- watershed_ext |> 
+  st_intersection(pad) |>
+  mutate(area = st_area(geometry))
 ```
 
 # group data by Mng_Typ and calculate the total land area per Mng_Typ
 ```{r}
-gbdByMng <- gbd_pad_int %>%
-  group_by(Mng_Typ) %>%
-  summarise(areaMng_Typ = sum(area))
+gbdByMng <- gbd_pad_int |>
+  group_by(Mng_Typ) |>
+  summarise(areaMng_Typ = as.numeric(sum(area))) |>
+  arrange(desc(areaMng_Typ)) |>
+  ms_simplify()
 
-# change data type of areaMng_Typ field to numeric (from 'S3: units' with m^2 suffix)
-gbdByMng$areaMng_Typ <- as.numeric(gbdByMng$areaMng_Typ)
-
-salineLakes5070ByMng <- saline_lakes_5070_pad_int %>%
-  group_by(Mng_Typ, GNIS_Nm) %>%
-  summarise(areaMng_Typ = sum(area))
-
-salineLakes5070ByMng$areaMng_Typ <- as.numeric(salineLakes5070ByMng$areaMng_Typ)
-
-watershedExtHuc10_5070ByMng <- watershed_ext_huc10_5070_pad_int %>%
-  group_by(Mng_Typ, HUC10_N) %>%
-  summarise(areaMng_Typ = sum(area))
-
-watershedExtHuc10_5070ByMng$areaMng_Typ <- as.numeric(watershedExtHuc10_5070ByMng$areaMng_Typ)
-
-watershedExt5070ByMng <- watershed_ext_5070_pad_int %>%
+watershedExtByMng <- watershed_ext_pad_int %>%
   group_by(Mng_Typ, lk_w_st) %>%
-  summarise(areaMng_Typ = sum(area))
+  summarise(areaMng_Typ = as.numeric(sum(area)))|>
+  ms_simplify()
 
-watershedExt5070ByMng$areaMng_Typ <- as.numeric(watershedExt5070ByMng$areaMng_Typ)
 ```
 
 # group data by MngNm_D and calculate the total land area per MngNm_D (more detailed Manamgement Types)
 ```{r}
-gbdByMngNm <- gbd_pad_int %>%
-  group_by(MngNm_D) %>%
-  summarise(areaMngNm_Typ = sum(area))
+## creating a grouping variable to assign color scales within (fewer colors)
+gbdByMngNm <- gbd_pad_int |>
+  group_by(Mng_Level, MngNm_D) |>
+  summarise(areaMngNm_Typ = as.numeric(sum(area))) |>
+  ms_simplify()
+str(gbdByMngNm)
 
-# change data type of areaMng_Typ field to numeric (from 'S3: units' with m^2 suffix)
-gbdByMngNm$areaMngNm_Typ <- as.numeric(gbdByMngNm$areaMngNm_Typ)
+## what are thet top?
+gbdByMngNm |> arrange(desc(areaMngNm_Typ))
 
-salineLakes5070ByMngNm <- saline_lakes_5070_pad_int %>%
-  group_by(MngNm_D, GNIS_Nm) %>%
-  summarise(areaMngNm_Typ = sum(area))
+watershedExtByMngNm <- watershed_ext_pad_int |>
+  group_by(Mng_Level, MngNm_D, lk_w_st) |>
+  summarise(areaMngNm_Typ = as.numeric(sum(area))) |>
+  ms_simplify()
 
-salineLakes5070ByMngNm$areaMngNm_Typ <- as.numeric(salineLakes5070ByMngNm$areaMngNm_Typ)
-
-watershedExtHuc10_5070ByMngNm <- watershed_ext_huc10_5070_pad_int %>%
-  group_by(MngNm_D, HUC10_N) %>%
-  summarise(areaMngNm_Typ = sum(area))
-
-watershedExtHuc10_5070ByMngNm$areaMngNm_Typ <- as.numeric(watershedExtHuc10_5070ByMngNm$areaMngNm_Typ)
-
-watershedExt5070ByMngNm <- watershed_ext_5070_pad_int %>%
-  group_by(MngNm_D, lk_w_st) %>%
-  summarise(areaMngNm_Typ = sum(area))
-
-watershedExt5070ByMngNm$areaMngNm_Typ <- as.numeric(watershedExt5070ByMngNm$areaMngNm_Typ)
 ```
 
 
 # Plot 
 ```{r}
-ggplot(data = gbdByMngNm%>% st_transform(crs=st_crs(saline_lakes))) +
+ggplot(data = gbdByMngNm ) +
+  geom_sf(aes(fill = Mng_Level))
+
+ggplot(data = watershedExtByMngNm) +
   geom_sf(aes(fill = MngNm_D))
 
-ggplot(data = salineLakes5070ByMng) +
-  geom_sf(aes(fill = Mng_Typ))
-
-ggplot(data = watershedExtHuc10_5070ByMngNm_grp %>% filter(lk_w_st %in% c("Great Salt Lake"))) +
-  geom_sf(aes(fill = MngGroup))
-
-ggplot(data = watershedExt5070ByMng) +
-  geom_sf(aes(fill = Mng_Typ))
-
-ggplot(data = watershed_ext_huc10 %>% filter(lk_w_st %in% c("Great Salt Lake,UT"))) +
-  geom_sf(aes(fill=HUC10_N)) + 
-  
-  
 ```
 
 # Group some of the Management Type names to reduce colors needed 
 ```{r}
-gbdByMngNm_grp <- gbdByMngNm %>% 
+gbdByMngNm <- gbdByMngNm %>% 
   mutate(MngGroup = case_when(
    MngNm_D == "American Indian Lands" ~ "Native American areas", 
    MngNm_D == "Agricultural Research Service" ~ "Federal - other",
@@ -171,7 +145,7 @@ gbdByMngNm_grp <- gbdByMngNm %>%
     TRUE ~ MngNm_D
   ))
 
-salineLakesByMngNm_grp <- salineLakes5070ByMngNm %>% 
+watershedExtByMngNm <- watershedExtByMngNm %>% 
   mutate(MngGroup = case_when(
    MngNm_D == "American Indian Lands" ~ "Native American areas", 
    MngNm_D == "Agricultural Research Service" ~ "Federal - other",
@@ -192,136 +166,285 @@ salineLakesByMngNm_grp <- salineLakes5070ByMngNm %>%
     TRUE ~ MngNm_D
   ))
 
-watershedExtHuc10_5070ByMngNm_grp <- watershedExtHuc10_5070ByMngNm %>% 
-  mutate(MngGroup = case_when(
-   MngNm_D == "American Indian Lands" ~ "Native American areas", 
-   MngNm_D == "Agricultural Research Service" ~ "Federal - other",
-    MngNm_D == "Army Corps of Engineers" ~ "Federal - other", 
-    MngNm_D == "Department of Energy" ~ "Federal - other",
-    MngNm_D == "Natural Resources Conservation Service" ~ "Federal - other", 
-    MngNm_D == "State Department of Conservation" ~ "State entities",
-    MngNm_D == "Other or Unknown State Land" ~ "State entities", 
-    MngNm_D == "State Park and Recreation" ~ "State entities",
-    MngNm_D == "State Department of Land" ~ "State entities",
-    MngNm_D == "State Fish and Wildlife" ~ "State entities", 
-    MngNm_D == "State Department of Natural Resources" ~ "State entities", 
-    MngNm_D == "State Land Board" ~ "State entities", 
-    MngNm_D == "Regional Agency Land" ~ "Regional entites",
-    MngNm_D == "County Land" ~ "Municipal entities",
-    MngNm_D == "City Land" ~ "Municipal entities", 
-    MngNm_D == "Non-Governmental Organization" ~ "NGO",
-    TRUE ~ MngNm_D
-  ))
+library(colorspace)
+yellbr<- c('E6B325', 'A47E3B', 'YlOrRd', '', '', '', '')
+sequential_hcl(7, palette = 'YlOrRd')
+pal_mng <- gbdByMngNm |>
+  st_drop_geometry() |>
+  distinct(Mng_Level, MngGroup, MngNm_D) |>
+  arrange(Mng_Level, MngGroup) |>
+  mutate(color = c(sequential_hcl(7, palette = 'YlOrBr')[3:1], 
+                   rep(sequential_hcl(7, palette = 'YlOrBr')[4], 4),
+                   sequential_hcl(7, palette = 'YlOrBr')[5:7],
+                   'dodgerblue',
+                   'grey','grey',
+                   sequential_hcl(12, palette = 'Purp')[1],
+                   rep(sequential_hcl(12, palette = 'Purp')[2],2),
+                   sequential_hcl(12, palette = 'Purp')[3:4],
+                   sequential_hcl(12, palette = 'Purp')[5:11],
+                   "pink"
+                   
+                   ))
+
 ```
 
 ```{r}
-mapBound <- gbdByMngNm_grp %>% st_transform(crs=st_crs(4326)) %>% 
-  st_bbox() %>% st_as_sfc() %>% st_buffer(0.25) %>%
-  st_bbox() %>% as.numeric()
 
-man_basemap <- ggmap::get_stamenmap(bbox = mapBound, zoom = 6, messaging = FALSE, maptype = 'terrain-lines')
+basemap <- get_tiles(x = gbdByMngNm, provider = "CartoDB.PositronNoLabels", crop = T, verbose = T, zoom = 7, forceDownload = T)
 
 manualcolors<-c('black','forestgreen', 'red2', 'orange', 'cornflowerblue', 'darkolivegreen4', 'indianred1', 'tan4', 'darkblue','firebrick4',  'yellowgreen', 'lightsalmon', 'tan3','darkgray', 'wheat4', 'moccasin', 'mediumvioletred','cadetblue1',
                 "darkolivegreen1" , "tomato3" , "#7CE3D8", "darkturquoise", "gainsboro")
 
-greatBasin <- ggmap(man_basemap) +
-  # geom_sf(data = states %>% st_transform(4326),
-  #              aes(group = STATE_ABBR),
-  #         alpha = 0.8,
-  #         fill = NA,
-  #         color = "grey60", inherit.aes = FALSE)+
-  geom_sf(data = gbdByMngNm_grp %>% st_transform(4326), aes(fill = MngGroup, color = MngGroup), inherit.aes = FALSE) +
-  coord_sf(crs = st_crs(4326)) +
-scale_color_manual(values = manualcolors) +
-  scale_fill_manual(values = manualcolors) + 
+newcolors<-c('#e5a415','#e8d274', 
+             '#e58a63', '#f4f440', 
+             'cornflowerblue', 'darkolivegreen4', 
+             'indianred1', 'tan4', 
+             'lavender','orangered',  
+             'yellowgreen', 'lightsalmon', 
+             'purple','darkgray', 
+             'grey', 'moccasin', 
+             'mediumvioletred','purple',
+              "darkolivegreen1","tomato3" , 
+             "#7CE3D8", "darkturquoise", 
+             "gainsboro")
+
+gbd_pal <- gbdByMngNm |>
+  st_drop_geometry() |>
+  group_by(Mng_Level) |>
+  arrange(Mng_Level, MngGroup) |>
+  mutate(ord = row_number()) 
+
+greatBasin <- gbdByMngNm |>
+  left_join(gbd_pal) |>
+  ggplot() +
+  geom_spatraster_rgb(data = basemap) +
+  geom_sf(
+          aes(fill = MngGroup), 
+          color = NA,
+          inherit.aes = FALSE) +
+  coord_sf() +
+  #scale_color_manual(values = manualcolors) +
+  #scale_fill_manual(values = newcolors) + 
+  scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
+  labs(fill='') +
+  scale_alpha(range = c(0.5, 1)) +
+  guides() + 
+  theme_void() +
+  theme(legend.position="bottom",
+        legend.title=element_blank(),
+        plot.background = element_rect(fill = 'white', color = NA)) +
+  annotation_north_arrow(location = "tr", which_north = "true", 
+                         pad_x = unit(0.2, "in"), pad_y = unit(0.15, "in"),
+                         height = unit(0.35, "in"), width= unit(0.2, "in"),
+                         style = north_arrow_orienteering(fill = c("black", "black"),
+                                                          line_col = "black",
+                                                          text_col = "black"))
+greatBasin
+
+ggsave(here("6_visualize/out/greatBasin.svg"), width = 10, height = 7, dpi = 300)
+
+```
+
+```{r}
+mapBound <- watershedExtByMngNm %>% st_transform(crs=proj) %>% 
+  st_bbox() %>% st_as_sfc() %>% st_buffer(0.25) %>%
+  st_bbox() %>% as.numeric()
+
+pyramid <- watershedExtByMngNm |>
+  filter(lk_w_st %in% c('Pyramid Lake,NV', 'Winnemucca Lake,NV'))
+
+basemap_pyramid <- get_tiles(x = pyramid, provider = "CartoDB.PositronNoLabels", crop = T, verbose = T, zoom = 9, forceDownload = T)
+
+pyramid |>
+  left_join(gbd_pal) |>
+  ggplot() +
+  geom_spatraster_rgb(data = basemap_pyramid |> terra::crop(pyramid)) +
+  geom_sf(
+          aes(fill = MngGroup), 
+          color = NA, size = 0.2) + 
+  #geom_sf(data = saline_lakes |> filter(lk_w_st %in% c('Pyramid Lake,NV', 'Winnemucca Lake,NV')), 
+   #       fill = '#b2d8d8') +
+  coord_sf() + 
+  #scale_fill_manual(values = newcolors) + 
+  scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
   labs(fill='Management Type') +
-  guides(color="none", 
-         fill = guide_legend(override.aes=list(linetype = 0))) + 
+  guides(color="none") +
   theme_void() +
+  scale_alpha(range = c(0.5, 1)) +
   theme(legend.position="bottom",
-        legend.title=element_blank()) +
+        legend.title=element_blank(),
+        legend.key = element_blank()) +
   annotation_north_arrow(location = "tr", which_north = "true", 
                          pad_x = unit(0.2, "in"), pad_y = unit(0.15, "in"),
-                         height = unit(0.5, "in"), width= unit(0.2, "in"),
+                         height = unit(0.35, "in"), width= unit(0.2, "in"),
                          style = north_arrow_orienteering(fill = c("black", "black"),
                                                           line_col = "black",
                                                           text_col = "black"))
 
 
-ggsave(here("6_visualize/out/greatBasin.png"), width = 10, height = 7, dpi = 500)
+ggsave(here("6_visualize/out/land_pyramidLake.svg"), width = 10, height = 7, dpi = 300)
+
 ```
 
+
 ```{r}
-mapBound <- salineLakesByMngNm_grp %>% st_transform(crs=st_crs(4326)) %>% 
-  st_bbox() %>% st_as_sfc() %>% st_buffer(0.25) %>%
-  st_bbox() %>% as.numeric()
 
-man_basemap <- ggmap::get_stamenmap(bbox = mapBound, zoom = 7, messaging = FALSE, maptype = 'terrain-lines')
+mono <- watershedExtByMngNm |>
+  filter(lk_w_st %in% c('Mono Lake,CA'))
 
-salineLakes <- ggmap(man_basemap) +
-  # geom_sf(data = states %>% st_transform(4326),
-  #              aes(group = STATE_ABBR),
-  #         alpha = 0.3,
-  #         fill = NA,
-  #         color = "grey60", inherit.aes = FALSE,
-  #         linetype = "11", size = 0.8) +
-  geom_sf(data = salineLakesByMngNm_grp %>% st_transform(4326), aes(fill = MngGroup, color=MngGroup),
-          inherit.aes = FALSE) + 
-  coord_sf(crs = st_crs(4326)) + 
-scale_color_manual(values = manualcolors) +
-  scale_fill_manual(values = manualcolors) + 
- labs(fill='Management Type') +
-  guides(color="none", 
-         fill = guide_legend(override.aes=list(linetype = 0))) +
+basemap_mono <- get_tiles(x = mono, provider = "CartoDB.PositronNoLabels", crop = T, verbose = T, zoom = 9, forceDownload = T)
+
+mono |>
+  left_join(gbd_pal) |>
+  ggplot() +
+  geom_spatraster_rgb(data = basemap_mono |> terra::crop(mono)) +
+  geom_sf(
+          aes(fill = MngGroup), 
+          color = 'black',
+          size = 0.2) + 
+  geom_sf(data = saline_lakes |> filter(lk_w_st %in% c('Mono Lake,CA')), 
+          fill = NA, color = 'white') +
+  coord_sf() + 
+  scale_fill_scico_d(palette = 'bamako', direction = -1, end = 0.8) +
+  #scale_fill_manual(values = newcolors) + 
+  scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
+  labs(fill='Management Type') +
+  guides(color="none") +
   theme_void() +
   theme(legend.position="bottom",
         legend.title=element_blank(),
         legend.key = element_blank()) +
   annotation_north_arrow(location = "tr", which_north = "true", 
                          pad_x = unit(0.2, "in"), pad_y = unit(0.15, "in"),
-                         height = unit(0.5, "in"), width= unit(0.2, "in"),
+                         height = unit(0.35, "in"), width= unit(0.2, "in"),
                          style = north_arrow_orienteering(fill = c("black", "black"),
                                                           line_col = "black",
                                                           text_col = "black"))
 
-ggsave(here("6_visualize/out/salineLakes.png"), width = 10, height = 7, dpi = 500)
 
+ggsave(here("6_visualize/out/land_monoLake.svg"), width = 10, height = 7, dpi = 300)
 ```
 
+# Percent of land charts
 ```{r}
-mapBound <- watershedExtHuc10_5070ByMngNm_grp %>% st_transform(crs=st_crs(4326)) %>% 
-  st_bbox() %>% st_as_sfc() %>% st_buffer(0.25) %>%
-  st_bbox() %>% as.numeric()
+# Great Basin level
+gbdByMngNm_grp_pArea <- gbdByMngNm |> 
+  st_drop_geometry() |>
+  group_by(MngGroup) %>% 
+  summarize(areaMngNm_Typ = sum(areaMngNm_Typ)) |>
+  mutate(GB_area = sum(areaMngNm_Typ),
+         Proportion = as.numeric(100 * (areaMngNm_Typ /GB_area)),
+         Label = sprintf(" %s%%", round(Proportion, 1))) |>
+  arrange(Proportion) |> 
+  left_join(gbdByMngNm)
 
-man_basemap <- ggmap::get_stamenmap(bbox = mapBound, zoom = 6, messaging = FALSE, maptype = 'terrain-lines')
+ggplot(data = gbdByMngNm_grp_pArea, 
+       aes(y= Proportion, x=reorder(MngGroup, Proportion, FUN = sum))) +
+  geom_bar(stat = "identity", 
+           aes(fill = MngGroup)) +
+  geom_text(aes(label = Label), 
+            position = position_dodge(width = 0.9), # What is going on with some of these
+            hjust= -0.01,
+            size = 3.5) +
+  geom_rect(ymin = -3, ymax = -1, xmin = seq(0.545, 15.545), xmax = seq(1.455, 16.455),
+              aes(fill = Mng_Level)) +
+  coord_flip() +
+  #scale_fill_manual(values = newcolors) + 
+  scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
+  scale_y_continuous(breaks = seq(0, 70, by = 10), limits = c(NA, 60), position  = 'right') +
+  theme_minimal() +
+  theme(legend.position = "none",
+        panel.grid.minor.x = element_blank(),
+        text = element_text(size=14)) +
+  labs(y = "Percent of land within Great Basin", x = NULL) 
 
-salineLakes <- ggmap(man_basemap) +
-  # geom_sf(data = states %>% st_transform(4326),
-  #              aes(group = STATE_ABBR),
-  #         alpha = 0.3,
-  #         fill = NA,
-  #         color = "grey60", inherit.aes = FALSE,
-  #         linetype = "11", size = 0.8) +
-  geom_sf(data = watershedExtHuc10_5070ByMngNm_grp %>% st_transform(4326), aes(fill = MngGroup, color=MngGroup),
-          inherit.aes = FALSE) + 
-  coord_sf(crs = st_crs(4326)) + 
-scale_color_manual(values = manualcolors) +
-  scale_fill_manual(values = manualcolors) + 
- labs(fill='Management Type') +
-  guides(color="none", 
-         fill = guide_legend(override.aes=list(linetype = 0))) +
-  theme_void() +
-  theme(legend.position="bottom",
-        legend.title=element_blank(),
-        legend.key = element_blank()) +
-  annotation_north_arrow(location = "tr", which_north = "true", 
-                         pad_x = unit(0.2, "in"), pad_y = unit(0.15, "in"),
-                         height = unit(0.5, "in"), width= unit(0.2, "in"),
-                         style = north_arrow_orienteering(fill = c("black", "black"),
-                                                          line_col = "black",
-                                                          text_col = "black"))
+ggsave(here("6_visualize/out/chart_greatBasinLand.svg"), width = 7, height = 7, dpi = 300)
+```
 
-ggsave(here("6_visualize/out/watershedExtentHuc10.png"), width = 10, height = 7, dpi = 500)
+
+```{r}
+
+# watershed lake level - Pyramid Lake, NV and Mono Lake, CA 
+watershedExtByMngNm_lakeArea <- watershedExtByMngNm |>
+  st_drop_geometry() |>
+  group_by(lk_w_st) |> 
+  summarise(areaMngNm_Typ = sum(areaMngNm_Typ)) 
+
+watershedExtByMngNm_sum <-watershedExtByMngNm %>%  group_by(MngNm_D, lk_w_st) |> 
+  summarize(area =sum(areaMngNm_Typ))
+
+watershedExtByMngNm_pArea <- merge(x = watershedExtByMngNm_lakeArea, y = watershedExtByMngNm, by = "lk_w_st") |>
+    filter(lk_w_st %in% c("Pyramid Lake,NV", 'Winnemucca Lake,NV')) |>  # filtering for Just Pyramid Lake and Mono Lake 
+  group_by(Mng_Level, MngGroup, MngNm_D) |>
+  summarize(areaMngNm_Typ.y = sum(areaMngNm_Typ.y),
+            areaMngNm_Typ.x = sum(areaMngNm_Typ.x)) |>
+  mutate(Proportion = as.numeric(100 * (areaMngNm_Typ.y /areaMngNm_Typ.x)),
+         Label = sprintf(" %s%%", round(Proportion, 1))) |>
+  arrange(-Proportion) 
+
+
+ggplot(data = watershedExtByMngNm_pArea, 
+       aes(y= Proportion, x=reorder(MngNm_D, Proportion))) +
+  geom_bar(stat = "identity", 
+           aes(fill=MngGroup)) +
+  geom_text(aes(label = Label), 
+            position = position_stack(vjust = 1), # What is going on with some of these
+            hjust=-0.01,
+            size = 3) +
+  scale_y_continuous(breaks = seq(0, 40, by = 10), 
+                     limits = c(NA, 35), 
+                     position  = 'right') + 
+  #scale_fill_manual(values = manualcolors) +
+  scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
+  geom_rect(data = watershedExtByMngNm_pArea |> distinct(Mng_Level, MngNm_D, Proportion), 
+            aes(x=reorder(MngNm_D, Proportion,fill = MngGroup),
+            ymin = -3, ymax = -1, 
+            xmin = seq(0.545, 18.545), xmax = seq(1.455, 19.455))) + 
+  coord_flip() +
+  theme_minimal() +
+  labs(y= "Percent of land within lake watershed",x=NULL) +
+  theme(legend.position = "none",
+        panel.grid.minor.x = element_blank())
+
+
+ggsave(here("6_visualize/out/chart_lakeLand_pyramid.svg"), width = 7, height = 7, dpi = 300)
+
+watershedExtByMngNm_pArea <- merge(x = watershedExtByMngNm_lakeArea, y = watershedExtByMngNm, by = "lk_w_st") |>
+    filter(lk_w_st %in% c("Mono Lake,CA")) |>  # filtering for Just Pyramid Lake and Mono Lake 
+  group_by(Mng_Level, MngGroup, MngNm_D) |>
+  summarize(areaMngNm_Typ.y = sum(areaMngNm_Typ.y),
+            areaMngNm_Typ.x = sum(areaMngNm_Typ.x)) |>
+  mutate(Proportion = as.numeric(100 * (areaMngNm_Typ.y /areaMngNm_Typ.x)),
+         Label = sprintf(" %s%%", round(Proportion, 1))) |>
+  arrange(-Proportion) 
+
+
+ggplot(data = watershedExtByMngNm_pArea, 
+       aes(y= Proportion, x=reorder(MngNm_D, Proportion))) +
+  geom_bar(stat = "identity", 
+           aes(fill=MngGroup)) +
+  geom_text(aes(label = Label), 
+            position = position_stack(vjust = 1), # What is going on with some of these
+            hjust=-0.01,
+            size = 3) +
+  scale_y_continuous(breaks = seq(0, 60, by = 10), 
+                     limits = c(NA, 65), 
+                     position  = 'right') + 
+  #scale_fill_manual(values = manualcolors) +
+  scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
+  geom_rect(data = watershedExtByMngNm_pArea |> distinct(Mng_Level, MngNm_D, Proportion), 
+            aes(x=reorder(MngNm_D, Proportion,fill = MngGroup),
+            ymin = -3, ymax = -1, 
+            xmin = seq(0.545, 9.545), xmax = seq(1.455, 10.455))) + 
+  coord_flip() +
+  theme_minimal() +
+  labs(y= "Percent of land within lake watershed",x=NULL) +
+  theme(legend.position = "none",
+        panel.grid.minor.x = element_blank())
+
+
+ggsave(here("6_visualize/out/chart_lakeLand_mono.svg"), width = 7, height = 7, dpi = 300)
+
 ```
 
 # Percent of land charts
@@ -396,6 +519,7 @@ geom_rect(ymin = -4, ymax = -1, xmin = seq(0.545, 11.545), xmax = seq(1.455, 12.
 ggsave(here("6_visualize/out/watershedLakeLevelChart.png"), width = 10, height = 7, dpi = 500)
 
 ```
+
 
 
 
