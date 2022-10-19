@@ -1,5 +1,6 @@
 ---
 title: "Land Ownership"
+author: "Elmera Azadpour, Cee Nell"
 output: html_document
 date: "2022-10-11"
 ---
@@ -101,7 +102,7 @@ gbdByMngNm <- gbd_pad_int |>
   ms_simplify()
 str(gbdByMngNm)
 
-## what are thet top?
+## what are the top?
 gbdByMngNm |> arrange(desc(areaMngNm_Typ))
 
 watershedExtByMngNm <- watershed_ext_pad_int |>
@@ -190,7 +191,7 @@ pal_mng <- gbdByMngNm |>
 
 ```{r}
 
-basemap <- get_tiles(x = gbdByMngNm, provider = "CartoDB.PositronNoLabels", crop = T, verbose = T, zoom = 7, forceDownload = T)
+basemap <- maptiles::get_tiles(x = gbdByMngNm, provider = "CartoDB.PositronNoLabels", crop = T, verbose = T, zoom = 7, forceDownload = T)
 
 manualcolors<-c('black','forestgreen', 'red2', 'orange', 'cornflowerblue', 'darkolivegreen4', 'indianred1', 'tan4', 'darkblue','firebrick4',  'yellowgreen', 'lightsalmon', 'tan3','darkgray', 'wheat4', 'moccasin', 'mediumvioletred','cadetblue1',
                 "darkolivegreen1" , "tomato3" , "#7CE3D8", "darkturquoise", "gainsboro")
@@ -265,7 +266,7 @@ pyramid |>
   #geom_sf(data = saline_lakes |> filter(lk_w_st %in% c('Pyramid Lake,NV', 'Winnemucca Lake,NV')), 
    #       fill = '#b2d8d8') +
   coord_sf() + 
-  #scale_fill_manual(values = newcolors) + 
+  # scale_fill_manual(values = colPal4) +
   scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
   labs(fill='Management Type') +
   guides(color="none") +
@@ -305,9 +306,9 @@ mono |>
   geom_sf(data = saline_lakes |> filter(lk_w_st %in% c('Mono Lake,CA')), 
           fill = NA, color = 'white') +
   coord_sf() + 
-  scale_fill_scico_d(palette = 'bamako', direction = -1, end = 0.8) +
-  #scale_fill_manual(values = newcolors) + 
-  scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
+  # scale_fill_scico_d(palette = 'bamako', direction = -1, end = 0.8) +
+  #scale_fill_manual(values = manualcolors) + 
+   scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
   labs(fill='Management Type') +
   guides(color="none") +
   theme_void() +
@@ -346,8 +347,8 @@ ggplot(data = gbdByMngNm_grp_pArea,
             position = position_dodge(width = 0.9), # What is going on with some of these
             hjust= -0.01,
             size = 3.5) +
-  geom_rect(ymin = -3, ymax = -1, xmin = seq(0.545, 15.545), xmax = seq(1.455, 16.455),
-              aes(fill = Mng_Level)) +
+geom_rect(ymin = -4, ymax = -1, xmin = seq(0.545, 15.545), xmax = seq(1.455, 16.455),
+              aes(fill = MngGroup)) +
   coord_flip() +
   #scale_fill_manual(values = newcolors) + 
   scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
@@ -355,8 +356,10 @@ ggplot(data = gbdByMngNm_grp_pArea,
   theme_minimal() +
   theme(legend.position = "none",
         panel.grid.minor.x = element_blank(),
+        plot.title = element_text(hjust = 0.5),
         text = element_text(size=14)) +
-  labs(y = "Percent of land within Great Basin", x = NULL) 
+  labs(title = "Percent of land within Great Basin",
+       x = NULL, y = NULL) 
 
 ggsave(here("6_visualize/out/chart_greatBasinLand.svg"), width = 7, height = 7, dpi = 300)
 ```
@@ -374,7 +377,7 @@ watershedExtByMngNm_sum <-watershedExtByMngNm %>%  group_by(MngNm_D, lk_w_st) |>
   summarize(area =sum(areaMngNm_Typ))
 
 watershedExtByMngNm_pArea <- merge(x = watershedExtByMngNm_lakeArea, y = watershedExtByMngNm, by = "lk_w_st") |>
-    filter(lk_w_st %in% c("Pyramid Lake,NV", 'Winnemucca Lake,NV')) |>  # filtering for Just Pyramid Lake and Mono Lake 
+    filter(lk_w_st %in% c("Pyramid Lake,NV", 'Winnemucca Lake,NV')) |>  # filtering for Just Pyramid Lake and Winnemucca Lake
   group_by(Mng_Level, MngGroup, MngNm_D) |>
   summarize(areaMngNm_Typ.y = sum(areaMngNm_Typ.y),
             areaMngNm_Typ.x = sum(areaMngNm_Typ.x)) |>
@@ -388,29 +391,34 @@ ggplot(data = watershedExtByMngNm_pArea,
   geom_bar(stat = "identity", 
            aes(fill=MngGroup)) +
   geom_text(aes(label = Label), 
-            position = position_stack(vjust = 1), # What is going on with some of these
-            hjust=-0.01,
+            position = position_stack(vjust = 1), 
+            hjust=-0.05,
             size = 3) +
   scale_y_continuous(breaks = seq(0, 40, by = 10), 
                      limits = c(NA, 35), 
                      position  = 'right') + 
   #scale_fill_manual(values = manualcolors) +
   scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
-  geom_rect(data = watershedExtByMngNm_pArea |> distinct(Mng_Level, MngNm_D, Proportion), 
-            aes(x=reorder(MngNm_D, Proportion,fill = MngGroup),
-            ymin = -3, ymax = -1, 
-            xmin = seq(0.545, 18.545), xmax = seq(1.455, 19.455))) + 
+  geom_rect(data = watershedExtByMngNm_pArea |> distinct(Mng_Level, MngNm_D, Proportion),
+            aes(fill = MngGroup),
+            ymin = -3, ymax = -1,
+            xmin = seq(0.545, 18.545), xmax = seq(1.455, 19.455),
+            position = position_dodge2(reverse = TRUE)) +
   coord_flip() +
   theme_minimal() +
-  labs(y= "Percent of land within lake watershed",x=NULL) +
+  labs(title= "Percent of land within lake watershed",
+       subtitle = "Pyramid Lake, NV & Winnemucca Lake, NV",
+       x=NULL, y = NULL) +
   theme(legend.position = "none",
-        panel.grid.minor.x = element_blank())
+        panel.grid.minor.x = element_blank(),
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
 
 
 ggsave(here("6_visualize/out/chart_lakeLand_pyramid.svg"), width = 7, height = 7, dpi = 300)
 
 watershedExtByMngNm_pArea <- merge(x = watershedExtByMngNm_lakeArea, y = watershedExtByMngNm, by = "lk_w_st") |>
-    filter(lk_w_st %in% c("Mono Lake,CA")) |>  # filtering for Just Pyramid Lake and Mono Lake 
+    filter(lk_w_st %in% c("Mono Lake,CA")) |>  # filtering for Just Mono Lake 
   group_by(Mng_Level, MngGroup, MngNm_D) |>
   summarize(areaMngNm_Typ.y = sum(areaMngNm_Typ.y),
             areaMngNm_Typ.x = sum(areaMngNm_Typ.x)) |>
@@ -424,102 +432,61 @@ ggplot(data = watershedExtByMngNm_pArea,
   geom_bar(stat = "identity", 
            aes(fill=MngGroup)) +
   geom_text(aes(label = Label), 
-            position = position_stack(vjust = 1), # What is going on with some of these
-            hjust=-0.01,
+            position = position_stack(vjust = 1), 
+            hjust=-0.05,
             size = 3) +
   scale_y_continuous(breaks = seq(0, 60, by = 10), 
                      limits = c(NA, 65), 
                      position  = 'right') + 
-  #scale_fill_manual(values = manualcolors) +
-  scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
+  scale_fill_manual(values = manualcolors) +
+  #scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
   geom_rect(data = watershedExtByMngNm_pArea |> distinct(Mng_Level, MngNm_D, Proportion), 
-            aes(x=reorder(MngNm_D, Proportion,fill = MngGroup),
+            aes(fill = MngGroup),
             ymin = -3, ymax = -1, 
-            xmin = seq(0.545, 9.545), xmax = seq(1.455, 10.455))) + 
+            xmin = seq(0.545, 9.545), xmax = seq(1.455, 10.455),
+            position = position_dodge2(reverse = TRUE)) + 
   coord_flip() +
   theme_minimal() +
-  labs(y= "Percent of land within lake watershed",x=NULL) +
+  labs(title= "Percent of land within lake watershed",
+       subtitle = "Mono Lake, CA", 
+       x=NULL, y=NULL) +
   theme(legend.position = "none",
-        panel.grid.minor.x = element_blank())
+        panel.grid.minor.x = element_blank(),
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
 
 
 ggsave(here("6_visualize/out/chart_lakeLand_mono.svg"), width = 7, height = 7, dpi = 300)
 
 ```
 
-# Percent of land charts
+# Color Pallete Exploration
 ```{r}
-# Great Basin level
-gbdByMngNm_grp_pArea <- gbdByMngNm_grp %>% 
-  st_drop_geometry() %>% 
-  group_by(MngGroup) %>% 
-  summarize(areaMngNm_Typ = sum(areaMngNm_Typ)) %>% 
-  mutate(GB_area = sum(areaMngNm_Typ),
-         Proportion = as.numeric(100 * (areaMngNm_Typ /GB_area)),
-         Label = sprintf(" %s%%", round(Proportion, 0))) %>%
-  arrange(Proportion)
+colPal0<-paletteer_d("ggthemes::Miller_Stone") # 11 cols
+# show_col(colPal0)
+colPal1<- paletteer_d("ggsci::planetexpress_futurama") #12
+colPal2<-paletteer_d("ggthemes::calc") #12
+colPal3<-paletteer_d("ggthemes::Green_Orange_Teal") #12
+colPal4<- c('#001200',"#472900", '#7A5C12', '#25351C', '#015E05',
+            '#646742', '#988F4D','#4C7022','#C7C45E', '#CAC7A3', '#EFEFC9') # 11 
 
-ggplot(data = gbdByMngNm_grp_pArea, aes(y= Proportion, x=reorder(MngGroup, Proportion, FUN = sum))) +
-  geom_bar(stat = "identity", 
-           aes(fill=MngGroup)) +
-    geom_text(aes(label = Label), position = position_dodge(width = 0.9), # What is going on with some of these
-              hjust= -0.01,
-              size = 3.5) +
-geom_rect(ymin = -4, ymax = -1, xmin = seq(0.545, 15.545), xmax = seq(1.455, 16.455),
-              aes(fill = MngGroup)) +
-  coord_flip() +
-  scale_fill_manual(values = manualcolors) + 
-    scale_y_continuous(breaks = seq(0, 70, by = 10)) +
-  theme_minimal() +
-  theme(legend.position = "none",
-        panel.grid.minor.x = element_blank(),
-        text = element_text(size=14)) +
-  labs(y= "Percent of land within Great Basin",x=NULL) 
+library(randomcoloR)
+nColor <- 20
+myColor <- randomcoloR::distinctColorPalette(k = 20)
+pie(rep(1, nColor), col = myColor)
 
-ggsave(here("6_visualize/out/greatBasinChart.png"), width = 10, height = 7, dpi = 500)
-
-
-# watershed lake level - Pyramid Lake, NV and Mono Lake, CA 
-watershedExt5070ByMngNm_lakeArea <- watershedExt5070ByMngNm %>% 
-  st_drop_geometry() %>% 
-  group_by(lk_w_st) %>% 
-  summarise(areaMngNm_Typ = sum(areaMngNm_Typ)) 
-
-watershedExt5070ByMngNm_sum <-watershedExt5070ByMngNm %>%  group_by(MngNm_D, lk_w_st) %>% 
-  summarize(area =sum(areaMngNm_Typ))
-
-watershedExt5070ByMngNm_pArea <- merge(x = watershedExt5070ByMngNm_lakeArea, y = watershedExt5070ByMngNm, by = "lk_w_st") %>%
-  st_drop_geometry %>%  
- mutate(Proportion = as.numeric(100 * (areaMngNm_Typ.y /areaMngNm_Typ.x)),
-         Label = sprintf(" %s%%", round(Proportion, 0))) %>%
-  arrange(-Proportion) %>% 
-  filter(lk_w_st %in% c("Pyramid Lake,NV", "Mono Lake,CA")) %>%  # filtering for Just Pyramid Lake and Mono Lake per Cee's instructions 
-slice_max(n=12, Proportion) %>% # plot top Land ownerships
-  mutate(MngOrd = tidytext::reorder_within(MngNm_D, Proportion, lk_w_st)) # ordered land management by proportion and lake
-
-ggplot(data = watershedExt5070ByMngNm_pArea, aes(y= Proportion, x=reorder(MngOrd, Proportion, FUN = sum))) +
- geom_bar(stat = "identity", 
-           aes(fill=MngOrd)) +
-  geom_text(aes(label = Label), position = position_stack(vjust = 1), # What is going on with some of these
-              hjust=-0.01,
-              size = 3) +
-  scale_y_continuous(breaks = seq(0, 60, by = 10)) + 
-  scale_fill_manual(values = manualcolors) + 
-    facet_wrap(~lk_w_st,nrow=2,scales = "free_y") + 
-    scale_x_reordered() + 
-geom_rect(ymin = -4, ymax = -1, xmin = seq(0.545, 11.545), xmax = seq(1.455, 12.455),
-              aes(fill = MngOrd)) + 
-  coord_flip() +
-  theme_minimal() +
-  labs(y= "Percent of land within lake watershed extent",x=NULL) +
-  theme(legend.position = "none",
-        panel.grid.minor.x = element_blank())
-
-
-ggsave(here("6_visualize/out/watershedLakeLevelChart.png"), width = 10, height = 7, dpi = 500)
+library(pals)
+ pals_kelly <- c("#222222", "#F3C300","#875692","#F38400","#A1CAF1",
+                 "#BE0032","#C2B280","#848482", "#008856", "#E68FAC",
+                 "#0067A5","#F99379", "#604E97", "#F6A600", "#B3446C",
+                 "#DCD300", "#654522")
+ #show_col(pals_kelly)
+ 
+ manualcolors<-c('black','forestgreen', 'red2', 'orange', 'cornflowerblue', 'darkolivegreen4', 'indianred1', 'tan4', 'darkblue','firebrick4',  'yellowgreen', 'lightsalmon', 'tan3','darkgray', 'wheat4', 'moccasin', 'mediumvioletred','cadetblue1',
+                "darkolivegreen1" , "tomato3" , "#7CE3D8", "darkturquoise", "gainsboro")
+ #show_col(manualcolors)
+ 
 
 ```
-
-
 
 
