@@ -52,8 +52,8 @@ watershedExtByMngNm <- function(data){
 }
 
 # Group some of the Management Type names to reduce colors needed 
-reduceMng <- function(data){
-  data |>
+reduceMng <- function(data, out_file){
+  out <- data |>
     mutate(MngGroup = case_when(
       MngNm_D == "American Indian Lands" ~ "Native American areas", 
       MngNm_D == "Agricultural Research Service" ~ "Federal - other",
@@ -73,6 +73,9 @@ reduceMng <- function(data){
       MngNm_D == "Non-Governmental Organization" ~ "NGO",
       TRUE ~ MngNm_D
     ))
+  
+  saveRDS(out, out_file)
+  return(out_file)
 }
 
 # Get basemap
@@ -81,18 +84,22 @@ basemap <- function(data, zoom){
 }
 
 # Grouping my management level 
-gbd_pal <- function(data){
-  data |> 
+gbd_pal <- function(data, out_file){
+  out <- data |> 
     st_drop_geometry() |>
     group_by(Mng_Level) |>
     arrange(Mng_Level, MngGroup) |>
-    mutate(ord = row_number()) 
+    mutate(ord = row_number())
+  
+  saveRDS(out, out_file)
+  return(out_file)  
+  
 }
 
 # Percent of land charts, add proportion and label columns 
 # Great Basin Level 
-gbdByMngNm_grp_pArea <- function(data){
-  data |> 
+gbdByMngNm_grp_pArea <- function(data, out_file){
+ out <-  data |> 
     st_drop_geometry() |>
     group_by(MngGroup) %>% 
     summarize(areaMngNm_Typ = sum(areaMngNm_Typ)) |>
@@ -101,6 +108,9 @@ gbdByMngNm_grp_pArea <- function(data){
            Label = sprintf(" %s%%", round(Proportion, 1))) |>
     arrange(Proportion) |> 
     left_join(data)
+ 
+ saveRDS(out, out_file)
+ return(out_file) 
 }
 
 # watershed lake level - get area by management type for each lake 
@@ -118,17 +128,20 @@ watershedExtByMngNm_sum <-function(data){
   summarize(area =sum(areaMngNm_Typ))
 }
 
-# watershed lake level - Pyramid Lake, NV and Mono Lake, CA
-watershedExtByMngNm_pArea <- function(lake_area, data, focal_lakes){
+# watershed lake level 
+watershedExtByMngNm_pArea <- function(lake_area, data, out_file){
   
   watershedExtByMngNm_pArea <- merge(x = lake_area, y = data, by = "lk_w_st") |>
-    filter(lk_w_st %in% focal_lakes) |>  # filter for focal lakes of interest 
-    group_by(Mng_Level, MngGroup, MngNm_D) |>
+    # filter(lk_w_st %in% focal_lakes) |>  # filter for focal lakes of interest 
+    group_by(Mng_Level, MngGroup, MngNm_D, lk_w_st) |>
     summarize(areaMngNm_Typ.y = sum(areaMngNm_Typ.y),
               areaMngNm_Typ.x = sum(areaMngNm_Typ.x)) |>
     mutate(Proportion = as.numeric(100 * (areaMngNm_Typ.y /areaMngNm_Typ.x)),
            Label = sprintf(" %s%%", round(Proportion, 1))) |>
     arrange(-Proportion) 
+  
+  saveRDS(watershedExtByMngNm_pArea, out_file)
+  return(out_file) 
   
 }
 
