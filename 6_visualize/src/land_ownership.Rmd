@@ -215,7 +215,7 @@ greatBasin <- gbdByMngNm |>
   scale_alpha(range = c(0.5, 1)) +
   guides() + 
   theme_void() +
-  theme(legend.position="bottom",
+  theme(legend.position="none",
         legend.title=element_blank(),
         plot.background = element_rect(fill = 'white', color = NA)) +
   annotation_north_arrow(location = "tr", which_north = "true", 
@@ -226,7 +226,7 @@ greatBasin <- gbdByMngNm |>
                                                           text_col = "black"))
 greatBasin
 
-ggsave(here("6_visualize/out/greatBasin.svg"), width = 10, height = 7, dpi = 300)
+# ggsave(here("6_visualize/out/greatBasin.svg"), width = 10, height = 7, dpi = 300)
 
 ```
 
@@ -341,11 +341,11 @@ geom_rect(ymin = -4, ymax = -1, xmin = seq(0.545, 15.545), xmax = seq(1.455, 16.
   theme(legend.position = "none",
         panel.grid.minor.x = element_blank(),
         plot.title = element_text(hjust = 0.5),
-        text = element_text(size=14)) +
+        text = element_text(size=10)) +
   labs(title = "Percent of land within Great Basin",
        x = NULL, y = NULL) 
 
-ggsave(here("6_visualize/out/chart_greatBasinLand.svg"), width = 7, height = 7, dpi = 300)
+ggsave(here("6_visualize/out/chart_greatBasinLand.png"), bg="white", width = 5.6, height = 4.3, dpi = 300)
 ```
 
 
@@ -361,16 +361,17 @@ watershedExtByMngNm_sum <-watershedExtByMngNm %>%  group_by(MngNm_D, lk_w_st) |>
   summarize(area =sum(areaMngNm_Typ))
 
 watershedExtByMngNm_pArea <- merge(x = watershedExtByMngNm_lakeArea, y = watershedExtByMngNm, by = "lk_w_st") |>
-    filter(lk_w_st %in% c("Pyramid Lake,NV", 'Winnemucca Lake,NV')) |>  # filtering for Just Pyramid Lake and Winnemucca Lake
-  group_by(Mng_Level, MngGroup, MngNm_D) |>
+    # filter(lk_w_st %in% c("Pyramid Lake,NV", 'Winnemucca Lake,NV')) |>  # filtering for Just Pyramid Lake and Winnemucca Lake
+  group_by(Mng_Level, MngGroup, MngNm_D, lk_w_st) |>
   summarize(areaMngNm_Typ.y = sum(areaMngNm_Typ.y),
             areaMngNm_Typ.x = sum(areaMngNm_Typ.x)) |>
   mutate(Proportion = as.numeric(100 * (areaMngNm_Typ.y /areaMngNm_Typ.x)),
          Label = sprintf(" %s%%", round(Proportion, 1))) |>
-  arrange(-Proportion) 
+  arrange(-Proportion)
 
+watershedExtByMngNm_pArea_pyramid <- watershedExtByMngNm_pArea |> filter(lk_w_st %in% c("Pyramid Lake,NV", 'Winnemucca Lake,NV'))
 
-ggplot(data = watershedExtByMngNm_pArea, 
+ggplot(data = watershedExtByMngNm_pArea_pyramid, 
        aes(y= Proportion, x=reorder(MngNm_D, Proportion))) +
   geom_bar(stat = "identity", 
            aes(fill=MngGroup)) +
@@ -383,10 +384,10 @@ ggplot(data = watershedExtByMngNm_pArea,
                      position  = 'right') + 
   #scale_fill_manual(values = manualcolors) +
   scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
-  geom_rect(data = watershedExtByMngNm_pArea |> distinct(Mng_Level, MngNm_D, Proportion),
+  geom_rect(data = watershedExtByMngNm_pArea_pyramid |> distinct(Mng_Level, MngNm_D, Proportion),
             aes(fill = MngGroup),
             ymin = -3, ymax = -1,
-            xmin = seq(0.545, 18.545), xmax = seq(1.455, 19.455),
+            xmin = seq(0.545, as.numeric(paste(nrow(watershedExtByMngNm_pArea_pyramid) - 0.455))), xmax = seq(1.455, as.numeric(paste(nrow(watershedExtByMngNm_pArea_pyramid) + 0.455))),
             position = position_dodge2(reverse = TRUE)) +
   coord_flip() +
   theme_minimal() +
@@ -402,16 +403,17 @@ ggplot(data = watershedExtByMngNm_pArea,
 ggsave(here("6_visualize/out/chart_lakeLand_pyramid.svg"), width = 7, height = 7, dpi = 300)
 
 watershedExtByMngNm_pArea <- merge(x = watershedExtByMngNm_lakeArea, y = watershedExtByMngNm, by = "lk_w_st") |>
-    filter(lk_w_st %in% c("Mono Lake,CA")) |>  # filtering for Just Mono Lake 
-  group_by(Mng_Level, MngGroup, MngNm_D) |>
+    # filter(lk_w_st %in% c("Mono Lake,CA")) |>  # filtering for Just Mono Lake
+  group_by(Mng_Level, MngGroup, MngNm_D, lk_w_st) |>
   summarize(areaMngNm_Typ.y = sum(areaMngNm_Typ.y),
             areaMngNm_Typ.x = sum(areaMngNm_Typ.x)) |>
   mutate(Proportion = as.numeric(100 * (areaMngNm_Typ.y /areaMngNm_Typ.x)),
          Label = sprintf(" %s%%", round(Proportion, 1))) |>
   arrange(-Proportion) 
 
+watershedExtByMngNm_pArea_mono <- watershedExtByMngNm_pArea |> filter(lk_w_st %in% c("Mono Lake,CA"))
 
-ggplot(data = watershedExtByMngNm_pArea, 
+ggplot(data = watershedExtByMngNm_pArea_mono,
        aes(y= Proportion, x=reorder(MngNm_D, Proportion))) +
   geom_bar(stat = "identity", 
            aes(fill=MngGroup)) +
@@ -424,10 +426,10 @@ ggplot(data = watershedExtByMngNm_pArea,
                      position  = 'right') + 
   # scale_fill_manual(values = manualcolors) +
   scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
-  geom_rect(data = watershedExtByMngNm_pArea |> distinct(Mng_Level, MngNm_D, Proportion), 
+  geom_rect(data = watershedExtByMngNm_pArea_mono |> distinct(Mng_Level, MngNm_D, Proportion), 
             aes(fill = MngGroup),
             ymin = -3, ymax = -1, 
-            xmin = seq(0.545, 9.545), xmax = seq(1.455, 10.455),
+            xmin = seq(0.545, as.numeric(paste(nrow(watershedExtByMngNm_pArea_mono) - 0.455))), xmax = seq(1.455, as.numeric(paste(nrow(watershedExtByMngNm_pArea_mono) + 0.455))),
             position = position_dodge2(reverse = TRUE)) + 
   coord_flip() +
   theme_minimal() +
