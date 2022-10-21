@@ -28,41 +28,41 @@ p2_targets <- list(
   
   # Group some of the Management Type names to reduce colors needed 
   tar_target(p2_gbd_ByMngNm_reduce,
-             reduceMng(p2_gbd_ByMngNm)),
+             reduceMng(p2_gbd_ByMngNm, 
+             out_file = '1_fetch/out/gbd_ByMngNm_reduce.rds')),
   tar_target(p2_watershedExt_ByMngNm_reduce,
-             reduceMng(p2_watershedExt_ByMngNm)),
+             reduceMng(p2_watershedExt_ByMngNm,
+                       out_file = '1_fetch/out/watershedExt_ByMngNm_reduce.rds')),
   
   # Grouping my management level for plotting Great Basin map 
   tar_target(p2_gbd_pal,
-             gbd_pal(p2_gbd_ByMngNm_reduce)),
+             gbd_pal(readRDS(p2_gbd_ByMngNm_reduce),
+                     out_file = '1_fetch/out/gbd_pal.rds')),
   
   # For percent of land charts, add proportion and label columns
   # Great Basin level 
   tar_target(p2_gbdByMngNm_grp_pArea,
-             gbdByMngNm_grp_pArea(p2_gbd_ByMngNm_reduce)),
+             gbdByMngNm_grp_pArea(readRDS(p2_gbd_ByMngNm_reduce),
+                                  out_file = '1_fetch/out/gbdByMngNm_grp_pArea.rds')),
   
   # provide a target for focal lakes to filter  
   tar_target(p2_focal_lakes,
-             tibble(lakes = sort(unique(p2_watershedExt_ByMngNm_reduce$lk_w_st)))),
+             tibble(lakes = sort(unique(readRDS(p2_watershedExt_ByMngNm_reduce)$lk_w_st)))),
   
 # # watershed lake level - get area by management type for each lake 
   tar_target(p2_watershedExtByMngNm_lakeArea,
-             watershedExtByMngNm_lakeArea(p2_watershedExt_ByMngNm_reduce)),
+             watershedExtByMngNm_lakeArea(readRDS(p2_watershedExt_ByMngNm_reduce))),
 
 # watershed lake level - sum area by lake and management name 
 tar_target(p2_watershedExtByMngNm_sum,
-           watershedExtByMngNm_sum(p2_watershedExt_ByMngNm_reduce)),
+           watershedExtByMngNm_sum(readRDS(p2_watershedExt_ByMngNm_reduce))),
   
   
   # # For percent of land charts, add proportion and label columns 
   # # watershed lake level - Pyramid Lake, NV and Mono Lake, CA
   tar_target(p2_watershedExtByMngNm_grp_pArea, 
-             watershedExtByMngNm_pArea(lake_area = p2_watershedExtByMngNm_lakeArea, data =p2_watershedExt_ByMngNm_reduce, 
-                                       focal_lakes =c("Pyramid Lake,NV", 'Winnemucca Lake,NV')))
-
-# # add basemap
-# tar_target(p2_basemap_greatBasin, 
-#            basemap(data = p2_gbd_ByMngNm_reduce , zoom =7))
+             watershedExtByMngNm_pArea(lake_area = p2_watershedExtByMngNm_lakeArea, data =readRDS(p2_watershedExt_ByMngNm_reduce),
+                                       out_file = '1_fetch/out/watershedExtByMngNm_grp_pArea.rds'))
 
 )
 
