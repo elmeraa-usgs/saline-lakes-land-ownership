@@ -1,0 +1,53 @@
+---
+title: "Saline Lakes Land Ownership Visualizations"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(here)
+library(leaflet)
+library(scico)
+library(scales)
+library(sf)
+library(ggmap)
+library(ggspatial)
+library(rnaturalearthdata)
+library(rnaturalearth)
+library(ggsn)
+library(rmapshaper)
+library(maptiles)
+library(tidyterra)
+library(cowplot)
+
+# Read in viz R script 
+source('../../6_visualize/src/plot_land_data.R')
+```
+
+
+```{r, fig.width = 7, fig.height = 7}
+
+greaBasin_map <- map_greatBasin(data = p2_gbd_ByMngNm_reduce, join = p2_gbd_pal, zoom = 7 )
+greaBasin_map
+
+greatBasin_chart <- chart_greatBasinLand(data = p2_gbdByMngNm_grp_pArea)
+greatBasin_chart
+
+plot_grid(greaBasin_map+ theme(legend.position = 'none'), greatBasin_chart,rel_widths = c(0.09, 0.12), align = "h")
+
+ggsave(here("6_visualize/out/combineGreatBasin.png"), width = 10, height = 7, dpi = 300)
+```
+
+
+```{r, fig.width = 7, fig.height = 7}
+
+lakePyramid_map <- map_lakePyramid(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c("Pyramid Lake,NV", 'Winnemucca Lake,NV'))
+lakePyramid_map
+
+lakePyramid_chart <- chart_lakeLand_pyramid(data = p2_watershedExtByMngNm_grp_pArea)
+lakePyramid_chart
+
+plot_grid(lakePyramid_map, lakePyramid_chart,rel_widths = c(0.3, 0.55))
+```
+

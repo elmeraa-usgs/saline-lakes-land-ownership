@@ -193,22 +193,6 @@ pal_mng <- gbdByMngNm |>
 
 basemap <- maptiles::get_tiles(x = gbdByMngNm, provider = "CartoDB.PositronNoLabels", crop = T, verbose = T, zoom = 7, forceDownload = T)
 
-manualcolors<-c('black','forestgreen', 'red2', 'orange', 'cornflowerblue', 'darkolivegreen4', 'indianred1', 'tan4', 'darkblue','firebrick4',  'yellowgreen', 'lightsalmon', 'tan3','darkgray', 'wheat4', 'moccasin', 'mediumvioletred','cadetblue1',
-                "darkolivegreen1" , "tomato3" , "#7CE3D8", "darkturquoise", "gainsboro")
-
-newcolors<-c('#e5a415','#e8d274', 
-             '#e58a63', '#f4f440', 
-             'cornflowerblue', 'darkolivegreen4', 
-             'indianred1', 'tan4', 
-             'lavender','orangered',  
-             'yellowgreen', 'lightsalmon', 
-             'purple','darkgray', 
-             'grey', 'moccasin', 
-             'mediumvioletred','purple',
-              "darkolivegreen1","tomato3" , 
-             "#7CE3D8", "darkturquoise", 
-             "gainsboro")
-
 gbd_pal <- gbdByMngNm |>
   st_drop_geometry() |>
   group_by(Mng_Level) |>
