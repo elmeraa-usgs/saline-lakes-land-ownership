@@ -218,7 +218,7 @@ map_greatBasin <- function(data, join, zoom) {
     annotation_north_arrow(location = "tr", which_north = "true", 
                            pad_x = unit(0.0, "in"), pad_y = unit(0.2, "in"),
                            style = north_arrow_fancy_orienteering) +
-    annotation_scale(location="br",style = "bar", line_width = 0.5, width_hint =0.4, pad_x = unit(0.5, "cm"))
+    annotation_scale(location="br",style = "ticks", line_width = 0.8, width_hint =0.4, pad_x = unit(0.5, "cm"), tick_height = 0.0)
   
 }
 
@@ -260,7 +260,7 @@ ggm2 = lakesData |>
   annotation_north_arrow(location = "tr", which_north = "true", 
                          pad_x = unit(0.0, "in"), pad_y = unit(0.2, "in"),
                          style = north_arrow_fancy_orienteering) +
-  annotation_scale(location="br",style = "bar", line_width = 0.5, width_hint =0.4, pad_x = unit(0.5, "cm"))
+  annotation_scale(location="br",style = "ticks", line_width = 0.8, width_hint =0.4, pad_x = unit(0.5, "cm"), tick_height = 0.0)
 }
 
 
@@ -271,23 +271,21 @@ map_basin_inset <- function(data_gbd, data_lakes, proj) {
   data_lakes_centroids <- st_centroid(data_lakes) %>% st_transform(crs=proj)
   
   ggm3 = ggplot() +
-    geom_sf(data = data_gbd,
-            fill = 'white',
-            color = 'black',
+    geom_sf(data = data_gbd %>%  ms_simplify(),
+            fill = '#616A6B',
+            color = 'NA',
             inherit.aes = FALSE,
             alpha = 0.5) +
     geom_sf(data = data_lakes_centroids,
             fill = NA,
-            color = '#515A5A',
-            alpha = 0.5,
-            size = 2,
+            color = 'black',
+            alpha = 0.5, 
+            size = 2, 
             inherit.aes = FALSE) +
     # geom_sf(data = data_lakes,
     #         fill = "#D6EAF8", color = 'black', alpha=0.5) +
     coord_sf() +
     theme_void() 
-  
-  
 }
 
 
@@ -302,9 +300,9 @@ map_lake_inset <- function(data_gbd, data_lakes, data_watershed, focal_lakes, pr
     #         color = 'black',
     #         inherit.aes = FALSE,
     #         alpha = 0.5) +
-    geom_sf(data = data_watershed |> filter(lk_w_st %in% focal_lakes),
-            fill = 'white',
-            color = 'black',
+    geom_sf(data = data_watershed |> filter(lk_w_st %in% focal_lakes) %>%  ms_simplify(),
+            fill = '#616A6B',
+            color = NA,
             inherit.aes = FALSE,
             alpha = 0.5)+
     # geom_sf(data = lake_cent,
@@ -313,8 +311,8 @@ map_lake_inset <- function(data_gbd, data_lakes, data_watershed, focal_lakes, pr
     #         alpha = 0.5, 
     #         size = 3, 
     #         inherit.aes = FALSE) +
-    geom_sf(data = data_lakes |> filter(lk_w_st %in% focal_lakes),
-            fill = "#D6EAF8", color = 'black', alpha=0.5) + 
+    geom_sf(data = data_lakes |> filter(lk_w_st %in% focal_lakes) %>%  ms_simplify(),
+            fill = "black", color = NA) + 
     coord_sf() +
     theme_void() 
 
@@ -322,7 +320,7 @@ map_lake_inset <- function(data_gbd, data_lakes, data_watershed, focal_lakes, pr
 }
 
 
-map_greatBasinFederal <- function(data, join, zoom) {
+map_greatBasinFederal <- function(data,data_gbd_outline, join, zoom) {
   
   basemap <- maptiles::get_tiles(x = data, provider = "CartoDB.PositronNoLabels", crop = T, verbose = T, zoom = zoom, forceDownload = T)
   
@@ -335,7 +333,11 @@ map_greatBasinFederal <- function(data, join, zoom) {
       aes(fill = MngGroup),
       color = NA,
       inherit.aes = FALSE) +
-    coord_sf() + 
+    geom_sf(data = data_gbd_outline %>% ms_simplify(),
+            fill = NA, 
+            color = 'black',
+            inherit.aes = FALSE,
+            alpha = 0.5) + 
     # scale_color_manual(values = manualcolors) +
     # scale_fill_manual(values = newcolors) +
     scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
@@ -350,11 +352,12 @@ map_greatBasinFederal <- function(data, join, zoom) {
     annotation_north_arrow(location = "tr", which_north = "true", 
                            pad_x = unit(0.0, "in"), pad_y = unit(0.2, "in"),
                            style = north_arrow_fancy_orienteering) +
-    annotation_scale(location="br",style = "bar", line_width = 0.5, width_hint =0.4, pad_x = unit(0.5, "cm"))
+  annotation_scale(location="br",style = "ticks", line_width = 0.8, width_hint =0.4, pad_x = unit(0.5, "cm"), tick_height = 0.0)
+  
 }
 
 
-map_lakeFederal <- function(data, focal_lakes, join, zoom) {
+map_lakeFederal <- function(data, focal_lakes,data_watershed_outline, join, zoom) {
   
   lakesData <- data |> 
     filter(lk_w_st %in% focal_lakes)  
@@ -369,6 +372,11 @@ map_lakeFederal <- function(data, focal_lakes, join, zoom) {
     geom_sf(
       aes(fill = MngGroup), 
       color = NA, size = 0.2) + 
+    geom_sf(data = data_watershed_outline |> filter(lk_w_st %in% focal_lakes) %>% ms_simplify(),
+            fill = NA, 
+            color = 'black',
+            inherit.aes = FALSE,
+            alpha = 0.5) + 
     #geom_sf(data = saline_lakes |> filter(lk_w_st %in% focal_lakes), 
     #       fill = '#b2d8d8') +
     coord_sf() + 
@@ -386,5 +394,5 @@ map_lakeFederal <- function(data, focal_lakes, join, zoom) {
     annotation_north_arrow(location = "tr", which_north = "true", 
                            pad_x = unit(0.0, "in"), pad_y = unit(0.2, "in"),
                            style = north_arrow_fancy_orienteering) +
-    annotation_scale(location="br",style = "bar", line_width = 0.5, width_hint =0.4, pad_x = unit(0.5, "cm"))
+    annotation_scale(location="br",style = "ticks", line_width = 0.8, width_hint =0.4, pad_x = unit(0.5, "cm"), tick_height = 0.0)
 }
