@@ -59,7 +59,7 @@ gg_inset_map1
 
 ```{r}
 greatBasin_chartFed <- chart_basinFederal(data = p2_gbdByMngNm_grp_pArea)
-greaBasin_mapFed <- map_greatBasinFederal(data = p2_gbd_ByMngNm_reduce, join = p2_gbd_pal, zoom = 7 )
+greaBasin_mapFed <- map_greatBasinFederal(data = p2_gbd_ByMngNm_reduce, data_gbd_outline =p1_gbd_bnd, join = p2_gbd_pal, zoom = 7 )
 
 
 combineFed <- plot_grid(greaBasin_mapFed+ theme(legend.position = 'none'),
@@ -93,7 +93,7 @@ gg_inset_map6
 # Great Salt Lake, UT - Federal Lands
 
 ```{r}
-lakeGreatSalt_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Great Salt Lake,UT'))
+lakeGreatSalt_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Great Salt Lake,UT'))
 lakeGreatSalt_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Great Salt Lake,UT'))
 
 combineFed <- plot_grid(lakeGreatSalt_mapFed+ theme(legend.position = 'none'), lakeGreatSalt_chartFed,rel_widths = c(1.18, 1.25), rel_heights = c(0.55, 0.55))

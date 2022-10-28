@@ -59,7 +59,7 @@ gg_inset_map1
 
 ```{r}
 greatBasin_chartFed <- chart_basinFederal(data = p2_gbdByMngNm_grp_pArea)
-greaBasin_mapFed <- map_greatBasinFederal(data = p2_gbd_ByMngNm_reduce, join = p2_gbd_pal, zoom = 7 )
+greaBasin_mapFed <- map_greatBasinFederal(data = p2_gbd_ByMngNm_reduce, data_gbd_outline =p1_gbd_bnd, join = p2_gbd_pal, zoom = 7 )
 
 
 combineFed <- plot_grid(greaBasin_mapFed+ theme(legend.position = 'none'),
@@ -92,7 +92,7 @@ gg_inset_map2
 
 # Carson Lake, NV - Federal Lands
 ```{r}
-lakeCarson_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Carson Lake,NV'))
+lakeCarson_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce,data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Carson Lake,NV'))
 lakeCarson_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Carson Lake,NV'))
 
 combineFed <- plot_grid(lakeCarson_mapFed+ theme(legend.position = 'none'), lakeCarson_chartFed,rel_widths = c(1.18, 1.25))
@@ -128,7 +128,7 @@ gg_inset_map3
 
 # Eagle Lake, CA - Federal Lands
 ```{r}
-lakeEagle_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Eagle Lake,CA'))
+lakeEagle_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce,data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Eagle Lake,CA'))
 lakeEagle_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Eagle Lake,CA'))
 
 combineFed <- plot_grid(lakeEagle_mapFed+ theme(legend.position = 'none'), lakeEagle_chartFed,rel_widths = c(1.18, 1.25))
@@ -162,7 +162,7 @@ gg_inset_map4
 # Franklin Lake, NV - Federal Lands
 
 ```{r}
-lakeFranklin_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Franklin Lake,NV'))
+lakeFranklin_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Franklin Lake,NV'))
 lakeFranklin_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Franklin Lake,NV'))
 
 combineFed <- plot_grid(lakeFranklin_mapFed+ theme(legend.position = 'none'), lakeFranklin_chartFed,rel_widths = c(0.60, 0.60), rel_heights = c(0.55, 0.55))
@@ -196,7 +196,7 @@ gg_inset_map5
 # Goose Lake, CA - Federal Lands
 
 ```{r}
-lakeGoose_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Goose Lake,CA'))
+lakeGoose_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Goose Lake,CA'))
 lakeGoose_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Goose Lake,CA'))
 
 combineFed <- plot_grid(lakeGoose_mapFed+ theme(legend.position = 'none'), lakeGoose_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
@@ -228,7 +228,7 @@ gg_inset_map6
 # Great Salt Lake, UT - Federal Lands
 
 ```{r}
-lakeGreatSalt_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Great Salt Lake,UT'))
+lakeGreatSalt_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Great Salt Lake,UT'))
 lakeGreatSalt_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Great Salt Lake,UT'))
 
 combineFed <- plot_grid(lakeGreatSalt_mapFed+ theme(legend.position = 'none'), lakeGreatSalt_chartFed,rel_widths = c(1.18, 1.25), rel_heights = c(0.55, 0.55))
@@ -262,7 +262,7 @@ gg_inset_map7
 #  Harney Lake, OR - Federal Lands
 
 ```{r}
-lakHarney_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Harney Lake,OR'))
+lakHarney_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Harney Lake,OR'))
 lakeHarney_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Harney Lake,OR'))
 
 combineFed <- plot_grid(lakHarney_mapFed+ theme(legend.position = 'none'), lakeHarney_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
@@ -294,7 +294,7 @@ gg_inset_map8
 #  Honey Lake, CA - Federal Lands
 
 ```{r}
-lakeHoney_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Honey Lake,CA'))
+lakeHoney_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Honey Lake,CA'))
 lakeHoney_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Honey Lake,CA'))
 
 combineFed <- plot_grid(lakeHoney_mapFed+ theme(legend.position = 'none'), lakeHoney_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
@@ -326,7 +326,7 @@ gg_inset_map9
 #  Lake Abert, OR - Federal Lands
 
 ```{r}
-lakeAbert_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Lake Abert,OR'))
+lakeAbert_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Lake Abert,OR'))
 lakeAbert_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Lake Abert,OR'))
 
 combineFed <- plot_grid(lakeAbert_mapFed+ theme(legend.position = 'none'), lakeAbert_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
@@ -358,7 +358,7 @@ gg_inset_map10
 
 # Malheur Lake, OR - Federal Lands
 ```{r}
-lakeMalheur_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Malheur Lake,OR'))
+lakeMalheur_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Malheur Lake,OR'))
 lakeMalheur_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Malheur Lake,OR'))
 
 combineFed <- plot_grid(lakeMalheur_mapFed+ theme(legend.position = 'none'), lakeMalheur_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
@@ -390,7 +390,7 @@ gg_inset_map11
 # Mono Lake, CA - Federal Lands
 
 ```{r}
-lakeMono_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Mono Lake,CA'))
+lakeMono_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce,data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Mono Lake,CA'))
 lakeMono_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Mono Lake,CA'))
 
 combineFed <- plot_grid(lakeMono_mapFed+ theme(legend.position = 'none'), lakeMono_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
@@ -422,7 +422,7 @@ gg_inset_map12
 #  Owens Lake, CA - Federal Lands
 
 ```{r}
-lakeOwens_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Owens Lake,CA'))
+lakeOwens_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Owens Lake,CA'))
 lakeOwens_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Owens Lake,CA'))
 
 combineFed <- plot_grid(lakeOwens_mapFed+ theme(legend.position = 'none'), lakeOwens_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
@@ -454,7 +454,7 @@ gg_inset_map13
 #  Pyramid Lake, NV- Federal Lands
 
 ```{r}
-lakePyramid_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Pyramid Lake,NV'))
+lakePyramid_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Pyramid Lake,NV'))
 lakePyramid_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Pyramid Lake,NV'))
 
 combineFed <- plot_grid(lakePyramid_mapFed+ theme(legend.position = 'none'), lakePyramid_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
@@ -485,7 +485,7 @@ gg_inset_map14
 # Ruby Lake, NV - Federal Lands
 
 ```{r}
-lakeRuby_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Ruby Lake,NV'))
+lakeRuby_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Ruby Lake,NV'))
 lakeRuby_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Ruby Lake,NV'))
 
 combineFed <- plot_grid(lakeRuby_mapFed+ theme(legend.position = 'none'), lakeRuby_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
@@ -515,7 +515,7 @@ gg_inset_map15
 
 # Sevier Lake, UT - Federal Lands
 ```{r}
-lakeSevier_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Sevier Lake,UT'))
+lakeSevier_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Sevier Lake,UT'))
 lakeSevier_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Sevier Lake,UT'))
 
 combineFed <- plot_grid(lakeSevier_mapFed+ theme(legend.position = 'none'), lakeSevier_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
@@ -548,7 +548,7 @@ gg_inset_map16
 # Silver Lake, OR - Federal Lands
 
 ```{r}
-lakeSilver_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Silver Lake,OR'))
+lakeSilver_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Silver Lake,OR'))
 lakeSilver_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Silver Lake,OR'))
 
 combineFed <- plot_grid(lakeSilver_mapFed+ theme(legend.position = 'none'), lakeSilver_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
@@ -581,7 +581,7 @@ gg_inset_map17
 # Summer Lake, OR - Federal Lands
 
 ```{r}
-lakeSummer_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Summer Lake,OR'))
+lakeSummer_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Summer Lake,OR'))
 lakeSummer_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Summer Lake,OR'))
 
 combineFed <- plot_grid(lakeSummer_mapFed+ theme(legend.position = 'none'), lakeSummer_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
@@ -614,7 +614,7 @@ gg_inset_map18
 # Walker Lake, NV- Federal Lands
 
 ```{r}
-lakeWalker_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Walker Lake,NV'))
+lakeWalker_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Walker Lake,NV'))
 lakeWalker_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Walker Lake,NV'))
 
 combineFed <- plot_grid(lakeWalker_mapFed+ theme(legend.position = 'none'), lakeWalker_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
@@ -644,7 +644,7 @@ gg_inset_map19
 
 #  Warner Lake, OR- Federal Lands
 ```{r}
-lakeWarner_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Warner Lake,OR'))
+lakeWarner_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Warner Lake,OR'))
 lakeWarner_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Warner Lake,OR'))
 
 combineFed <- plot_grid(lakeWarner_mapFed+ theme(legend.position = 'none'), lakeWarner_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
@@ -675,7 +675,7 @@ gg_inset_map20
 
 # Winnemucca Lake, NV - Federal Lands
 ```{r}
-lakeWinnemucca_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Winnemucca Lake,NV'))
+lakeWinnemucca_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Winnemucca Lake,NV'))
 lakeWinnemucca_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Winnemucca Lake,NV'))
 
 combineFed <- plot_grid(lakeWinnemucca_mapFed + theme(legend.position = 'none'), lakeWinnemucca_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
