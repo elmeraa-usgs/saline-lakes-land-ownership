@@ -8,11 +8,11 @@ p2_targets <- list(
   
   # intersect pad to great basin, saline lakes, and watershed extent
   tar_target(p2_gbd_pad_int,
-             pad_int(data = p1_gbd_bnd, pad_data = p2_pad_clean)),
+             pad_int(data = readRDS("1_fetch/out/gbd_bnd.rds"), pad_data = p2_pad_clean)),
   tar_target(p2_saline_lakes_pad_int,
-             pad_int(data = p1_saline_lakes, pad_data = p2_pad_clean)),
+             pad_int(data = readRDS("1_fetch/out/saline_lakes_sf.rds"), pad_data = p2_pad_clean)),
   tar_target(p2_watershed_ext_pad_int,
-             pad_int(data = p1_watershed_ex, pad_data = p2_pad_clean)),
+             pad_int(data = readRDS("1_fetch/out/watershed_ext_sf.rds"), pad_data = p2_pad_clean)),
   
   # group data by Mng_Typ and calculate the total land area per Mng_Typ
   tar_target(p2_gbd_ByMng,
