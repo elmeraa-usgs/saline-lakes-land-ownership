@@ -1,0 +1,106 @@
+---
+title: "Saline Lakes Land Ownership Visualizations"
+format: pptx
+editor: visual
+reference-doc: ../src/template.pptx
+---
+
+```{r,  warning=FALSE}
+library(tidyverse)
+library(here)
+library(leaflet)
+library(scico)
+library(scales)
+library(sf)
+library(ggmap)
+library(ggspatial)
+library(rnaturalearthdata)
+library(rnaturalearth)
+library(ggsn)
+library(rmapshaper)
+library(maptiles)
+library(tidyterra)
+library(cowplot)
+
+# Read in viz R script 
+source('../../6_visualize/src/plot_land_data.R')
+
+# Read in data to render
+p2_gbd_ByMngNm_reduce <- readRDS("../../1_fetch/out/gbd_ByMngNm_reduce.rds")
+p2_watershedExt_ByMngNm_reduce <- readRDS("../../1_fetch/out/watershedExt_ByMngNm_reduce.rds")
+p2_gbd_pal <- readRDS("../../1_fetch/out/gbd_pal.rds")
+p2_gbdByMngNm_grp_pArea <- readRDS("../../1_fetch/out/gbdByMngNm_grp_pArea.rds")
+p2_watershedExtByMngNm_grp_pArea <- readRDS("../../1_fetch/out/watershedExtByMngNm_grp_pArea.rds")
+p1_saline_lakes_sf <-  readRDS("../../1_fetch/out/saline_lakes_sf.rds")
+p1_watershed_ext_sf <- readRDS("../../1_fetch/out/watershed_ext_sf.rds")
+p1_gbd_bnd <- readRDS("../../1_fetch/out/gbd_bnd.rds")
+```
+
+
+# Great Basin
+
+```{r,  warning=FALSE}
+# Broader groupings 
+greaBasin_map <- map_greatBasin(data = p2_gbd_ByMngNm_reduce, join = p2_gbd_pal, zoom = 7 )
+greatBasin_chart <- chart_greatBasinLand(data = p2_gbdByMngNm_grp_pArea)
+greatBasin_inset <- map_basin_inset(data_gbd = p1_gbd_bnd, data_lakes = p1_saline_lakes_sf,proj = st_crs(p1_gbd_bnd))
+
+combine <- plot_grid(greaBasin_map+ theme(legend.position = 'bottom'),
+          greatBasin_chart,rel_widths = c(0.91, 0.93), align = "h")
+
+gg_inset_map1 = ggdraw() +
+  draw_plot(combine) +
+  draw_plot(greatBasin_inset, x= -0.005, y = 0.127, width = 0.18, height = 0.175)
+
+gg_inset_map1
+```
+
+# Great Basin - Federal Lands
+
+```{r}
+greatBasin_chartFed <- chart_basinFederal(data = p2_gbdByMngNm_grp_pArea)
+greaBasin_mapFed <- map_greatBasinFederal(data = p2_gbd_ByMngNm_reduce, join = p2_gbd_pal, zoom = 7 )
+
+
+combineFed <- plot_grid(greaBasin_mapFed+ theme(legend.position = 'none'),
+          greatBasin_chartFed,rel_widths = c(0.91, 0.93), align = "h")
+
+gg_inset_mapFed = ggdraw() +
+  draw_plot(combineFed) +
+  draw_plot(greatBasin_inset, x= -0.0015, y = 0.078, width = 0.18, height = 0.175)
+
+gg_inset_mapFed
+
+```
+
+# Great Salt Lake, UT
+
+```{r,  warning=FALSE}
+lakeGreatSalt_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Great Salt Lake,UT'))
+lakeGreatSalt_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Great Salt Lake,UT'))
+lakeGreatSalt_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
+                                   data_watershed = p1_watershed_ext_sf, focal_lakes = c('Great Salt Lake,UT'), proj = st_crs(p1_gbd_bnd))
+
+combine<- plot_grid(lakeGreatSalt_map+ theme(legend.position = 'bottom'), lakeGreatSalt_chart,rel_widths = c(1.18, 1.25), rel_heights = c(0.55, 0.55))
+
+gg_inset_map6 = ggdraw() +
+  draw_plot(combine) +
+  draw_plot(lakeGreatSalt_inset, x= 0.035, y = 0.12, width = 0.15, height = 0.15)
+
+gg_inset_map6
+```
+
+# Great Salt Lake, UT - Federal Lands
+
+```{r}
+lakeGreatSalt_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Great Salt Lake,UT'))
+lakeGreatSalt_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Great Salt Lake,UT'))
+
+combineFed <- plot_grid(lakeGreatSalt_mapFed+ theme(legend.position = 'none'), lakeGreatSalt_chartFed,rel_widths = c(1.18, 1.25), rel_heights = c(0.55, 0.55))
+
+gg_inset_map6Fed = ggdraw() +
+  draw_plot(combineFed) +
+  draw_plot(lakeGreatSalt_inset,x= 0.028, y = 0.06, width = 0.15, height = 0.15)
+
+gg_inset_map6Fed 
+```
