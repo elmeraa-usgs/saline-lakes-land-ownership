@@ -55,7 +55,7 @@ watershedExtByMngNm <- function(data){
 reduceMng <- function(data, out_file){
   out <- data |>
     mutate(MngGroup = case_when(
-      MngNm_D == "American Indian Lands" ~ "Native American areas", 
+      MngNm_D == "American Indian Lands" ~ "Tribal land", 
       MngNm_D == "Agricultural Research Service" ~ "Federal - other",
       MngNm_D == "Army Corps of Engineers" ~ "Federal - other", 
       MngNm_D == "Department of Energy" ~ "Federal - other",
