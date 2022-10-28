@@ -211,12 +211,13 @@ greatBasin <- gbdByMngNm |>
   #scale_color_manual(values = manualcolors) +
   #scale_fill_manual(values = newcolors) + 
   scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
+  # viridis::scale_fill_viridis(discrete = TRUE, option="inferno", direction = -1, end = 0.6) + 
+  # scale_fill_manual(values = wes_palette("GrandBudapest1", n = 16)) + 
   labs(fill='') +
   scale_alpha(range = c(0.5, 1)) +
   guides() + 
   theme_void() +
-  theme(legend.position="none",
-        legend.title=element_blank(),
+  theme(legend.title=element_blank(),
         plot.background = element_rect(fill = 'white', color = NA)) +
   annotation_north_arrow(location = "tr", which_north = "true", 
                          pad_x = unit(0.2, "in"), pad_y = unit(0.15, "in"),
@@ -228,7 +229,110 @@ greatBasin
 
 # ggsave(here("6_visualize/out/greatBasin.svg"), width = 10, height = 7, dpi = 300)
 
+
+
 ```
+
+## `ggpatter` exploration
+```{r}
+test <- gbdByMngNm |>
+  left_join(gbd_pal) |>
+  mutate(color = case_when(
+    MngGroup == "Bureau of Land Management" ~ "#fcb1ad",
+    MngGroup == "Bureau of Reclamation" ~ "#fcb1ad",
+    MngGroup == "Department of Defense" ~ "#fcb1ad",
+    MngGroup == "Federal - other" ~ "#fcb1ad",
+    MngGroup == "Forest Service" ~ "#fcb1ad",
+    MngGroup == "National Park Service" ~ "#fcb1ad",
+    MngGroup == "U.S. Fish and Wildlife Service" ~ "#fcb1ad",
+    Mng_Level == "NGO" ~ "#d29345",
+    Mng_Level == "Private or Unknown" ~ "#6a7b3c",
+    Mng_Level == "Regional/State/Local" ~ "#184f61",
+  Mng_Level == "Tribal Land" ~ "#031f5a")) |>
+arrange(MngGroup)
+
+col <- as.vector(test$color)
+ col_pal <- c("#fcb1ad", "#fcb1ad", "#fcb1ad", "#fcb1ad", "#fcb1ad", "#184f61", "#184f61", "#fcb1ad", "#d29345", "#031f5a", "#184f61", "#6a7b3c", "#184f61", "#184f61", "#fcb1ad", "#6a7b3c")
+
+ggm1 = ggplot(test) +
+  geom_spatraster_rgb(data = basemap) +
+  geom_sf(
+          aes(fill = MngGroup),
+          color = NA,
+          inherit.aes = FALSE) +
+  geom_sf_pattern(aes(fill= MngGroup, pattern= MngGroup, pattern_angle=MngGroup),color='NA',
+                  pattern_density = 0.5,
+                  pattern_spacing = 0.025) + 
+  coord_sf() +
+  ggpattern::scale_pattern_manual(values=c('none', 'stripe', 'circle', 'crosshatch', 'wave', # federal
+                                'none', 'stripe',
+                                'stripe', # NPS
+                                'none', # native american
+                                'none', # NGO
+                                'circle',  # other/unknown local gov
+                                'none', # private
+                                'crosshatch', # reginal entities
+                                'wave', # state entities
+                                'wave', # USFWS
+                                'stripe')) +  # unknown
+  ggpattern::scale_pattern_angle_manual(values= c(rep(0,7), 45, rep(0, 6), 45, 0)) + 
+    # scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
+   # viridis::scale_fill_viridis(discrete = TRUE, option="inferno", direction = -1, end = 0.6) + 
+  scale_fill_manual(values = col_pal) + 
+     # scale_pattern_fill_manual() + 
+  # labs(fill='') +
+  scale_alpha(range = c(0.5, 1)) +
+  guides() + 
+  theme_void() +
+ theme(legend.position = "none",
+          legend.title=element_blank(),
+          plot.background = element_rect(fill = 'white', color = NA)) +
+    annotation_north_arrow(location = "tr", which_north = "true", 
+                           pad_x = unit(0.0, "in"), pad_y = unit(0.2, "in"),
+                           style = north_arrow_fancy_orienteering) +
+  annotation_scale(location="br",style = "bar", line_width = 0.5, width_hint =0.4, pad_x = unit(0.5, "cm"))
+
+ # ggsave(here("6_visualize/out/test.png"), width = 7, height =7, dpi = 300)
+```
+
+# inset 
+```{r}
+
+saline_lakes_cent <- st_centroid(saline_lakes) %>% st_transform(crs=proj)
+
+ggm2 = ggplot() +
+  geom_sf(data = gbd_bnd,
+          fill = NA,
+          color = 'black',
+          inherit.aes = FALSE)+
+   geom_sf(data = saline_lakes_cent,
+          fill = NA,
+          color = 'red',
+          alpha = 0.5, 
+          size = 2, 
+          inherit.aes = FALSE) +
+  coord_sf() +
+  theme_void() 
+
+# library(spData)
+# data("us_states", package = "spData")
+# us_map =   st_transform(us_states, crs= proj) 
+# gbd_bnd_bb = st_as_sfc(st_bbox(gbd_bnd %>% st_transform(crs=2163)))
+# 
+# ggplot() + 
+#   geom_sf(data = us_map, fill = "white") + 
+#   geom_sf(data = gbd_bnd_bb, fill = NA, color = "red", size = 1.2) +
+#   theme_void()
+
+
+gg_inset_map1 = ggdraw() +
+  draw_plot(ggm1) +
+  draw_plot(ggm2, x =0.180, y = 0.038, width = 0.2, height = 0.2)
+
+gg_inset_map1
+
+```
+
 
 ```{r}
 mapBound <- watershedExtByMngNm %>% st_transform(crs=proj) %>% 
@@ -279,7 +383,27 @@ mono <- watershedExtByMngNm |>
 
 basemap_mono <- get_tiles(x = mono, provider = "CartoDB.PositronNoLabels", crop = T, verbose = T, zoom = 9, forceDownload = T)
 
-mono |>
+mono_cent <- st_centroid(saline_lakes |> filter(lk_w_st %in% c('Mono Lake,CA'))) %>% st_transform(crs=proj)
+
+g2 = ggplot() +
+  geom_sf(data = gbd_bnd,
+          fill = NA,
+          color = 'black',
+          inherit.aes = FALSE) +
+    geom_sf(data = watershed_ext |> filter(lk_w_st %in% c('Mono Lake,CA')),
+          fill = 'lightblue',
+          color = NA,
+          inherit.aes = FALSE)+
+   geom_sf(data = mono_cent,
+          fill = NA,
+          color = 'red',
+          alpha = 0.5, 
+          size = 2, 
+          inherit.aes = FALSE) +
+  coord_sf() +
+  theme_void() 
+
+g1 = mono |>
   left_join(gbd_pal) |>
   ggplot() +
   geom_spatraster_rgb(data = basemap_mono |> terra::crop(mono)) +
@@ -287,8 +411,8 @@ mono |>
           aes(fill = MngGroup), 
           color = 'black',
           size = 0.2) + 
-  geom_sf(data = saline_lakes |> filter(lk_w_st %in% c('Mono Lake,CA')), 
-          fill = NA, color = 'white') +
+  # geom_sf(data = saline_lakes |> filter(lk_w_st %in% c('Mono Lake,CA')), 
+  #         fill = NA, color = 'white') +
   coord_sf() + 
   # scale_fill_scico_d(palette = 'bamako', direction = -1, end = 0.8) +
   #scale_fill_manual(values = manualcolors) + 
@@ -298,16 +422,20 @@ mono |>
   theme_void() +
   theme(legend.position="bottom",
         legend.title=element_blank(),
-        legend.key = element_blank()) +
-  annotation_north_arrow(location = "tr", which_north = "true", 
-                         pad_x = unit(0.2, "in"), pad_y = unit(0.15, "in"),
-                         height = unit(0.35, "in"), width= unit(0.2, "in"),
-                         style = north_arrow_orienteering(fill = c("black", "black"),
-                                                          line_col = "black",
-                                                          text_col = "black"))
+        legend.key = element_blank())  +
+    annotation_north_arrow(location = "tr", which_north = "true", 
+                           pad_x = unit(0.0, "in"), pad_y = unit(0.2, "in"),
+                           style = north_arrow_fancy_orienteering) +
+  annotation_scale(location="br",style = "bar", line_width = 0.5, width_hint =0.4, pad_x = unit(0.5, "cm"))
+
+gg_inset_map1 = ggdraw() +
+  draw_plot(g1) +
+  draw_plot(g2, x =0.588, y = 0.172, width = 0.15, height = 0.15)
+
+gg_inset_map1
 
 
-ggsave(here("6_visualize/out/land_monoLake.svg"), width = 10, height = 7, dpi = 300)
+# ggsave(here("6_visualize/out/land_monoLake.svg"), width = 10, height = 7, dpi = 300)
 ```
 
 # Percent of land charts
