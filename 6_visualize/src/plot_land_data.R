@@ -105,7 +105,6 @@ chart_lakeLand <- function(data, focal_lakes) {
 chart_basinFederal <- function(data){
   
   data <- data |> mutate(MngGroup = case_when(MngGroup == "Native American areas" ~ "Tribal Land",  TRUE ~ MngGroup))  %>% # ensure tribal lands are denoted properly 
-    # filter(!str_detect(Label, "0%")) %>%  # get rid of 0% rows 
     filter(Mng_Level %in% c("Federal")) # only displaying federal lands 
    
   ggplot(data = data, 
@@ -179,25 +178,13 @@ map_greatBasin <- function(data, join, zoom) {
 
  data_join = data  |> left_join(join)
  
- # col_pal <- c(scico(palette = 'batlow', direction = -1, end = 0.8, n = sum(grepl("Federal", data_join$Mng_Level))), 
- #              scico(palette = 'imola', direction = -1, n= sum(grepl("NGO", data_join$Mng_Level))),
- #              scico(palette = 'tokyo', direction = -1, end = 0.6, n= sum(grepl("Private or Unknown", data_join$Mng_Level))),
- #              scico(palette = 'lajolla', direction = -1, end = 0.8, n= sum(grepl("Regional/State/Local", data_join$Mng_Level))),
- #              scico(palette = 'buda', direction = -1, end = 0.8, n =sum(grepl("Tribal Land", data_join$Mng_Level))))
- # 
- # breaks <- data_join$MngGroup
- # 
- # labels <-  data_join$MngGroup
- 
-  ggm1 = ggplot(data_join) +
+ggm1 = ggplot(data_join) +
     geom_spatraster_rgb(data = basemap) +
     geom_sf(
       aes(fill = Mng_Level),
       color = NA,
       inherit.aes = FALSE) +
     coord_sf() + 
-    # scale_color_manual(values = manualcolors) +
-    # scale_fill_manual(values = newcolors) +
     # scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
     # viridis::scale_fill_viridis(discrete = TRUE, option="viridis", direction = -1, end = 0.8) + 
     #scale_fill_manual(values = col_pal, breaks = breaks, labels = labels) +
@@ -239,7 +226,6 @@ ggm2 = lakesData |>
   #geom_sf(data = saline_lakes |> filter(lk_w_st %in% focal_lakes), 
   #       fill = '#b2d8d8') +
   coord_sf() + 
-  # scale_fill_manual(values = colPal4) +
   # scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
   # viridis::scale_fill_viridis(discrete = TRUE, option="viridis", direction = -1, end = 0.8) + 
   scale_fill_manual("",
@@ -337,8 +323,6 @@ map_greatBasinFederal <- function(data,data_gbd_outline, join, zoom) {
             color = 'black',
             inherit.aes = FALSE,
             alpha = 0.5) + 
-    # scale_color_manual(values = manualcolors) +
-    # scale_fill_manual(values = newcolors) +
     scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
     # viridis::scale_fill_viridis(discrete = TRUE, option="mako", direction = -1, begin = 0.3, end = 0.9) + 
     labs(fill='') +
@@ -379,7 +363,6 @@ map_lakeFederal <- function(data, focal_lakes,data_watershed_outline, join, zoom
     #geom_sf(data = saline_lakes |> filter(lk_w_st %in% focal_lakes), 
     #       fill = '#b2d8d8') +
     coord_sf() + 
-    # scale_fill_manual(values = colPal4) +
     scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
     # viridis::scale_fill_viridis(discrete = TRUE, option="viridis", direction = -1, end = 0.8) + 
     labs(fill='Management Type') +
