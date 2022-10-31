@@ -23,7 +23,7 @@ chart_greatBasinLand <- function(data) {
                                  'State entities' = '#184E60',
                                  'Department of Defense' = '#FCA68C',
                                  'U.S. Fish and Wildlife Service' = '#FCA68C',
-                                 'Tribal Land' = '#001959',
+                                 'Tribal Land' = '#335C4C',
                                  'Municipal entities' = "#184E60",
                                  'National Park Service' = '#FCA68C',
                                  'Federal - other' = '#FCA68C',
@@ -45,11 +45,10 @@ chart_greatBasinLand <- function(data) {
 
 chart_lakeLand <- function(data, focal_lakes) {
   
-  data <- data |> mutate(MngNm_D = case_when(MngNm_D == "American Indian Lands" ~ "Tribal Land",  TRUE ~ MngNm_D)) %>% # ensure tribal lands are denoted properly 
-  # %>% # 
-   filter(!str_detect(Label, "0%"))  # get rid of 0% rows 
-  
-  data_lake <-  data |> filter(lk_w_st %in% focal_lakes)
+  data_lake <- data  |>
+    mutate(MngNm_D = case_when(MngNm_D == "American Indian Lands" ~ "Tribal Land",  TRUE ~ MngNm_D)) |> # ensure tribal lands are denoted properly
+      filter(lk_w_st %in% focal_lakes) |>
+  filter(!str_detect(Label, pattern = "^ 0%")) # get rid of 0% rows  
   
   ggplot(data = data_lake , 
          aes(y= Proportion, x=reorder(MngNm_D, Proportion))) +
@@ -89,7 +88,7 @@ chart_lakeLand <- function(data, focal_lakes) {
                                  'Other or Unknown Local Government' = '#184E60',
                                  'Other or Unknown State Land'  = '#184E60',
                                  'County Land' = '#184E60',
-                                 'Tribal Land' = '#001959',
+                                 'Tribal Land' = '#335C4C',
                                  'Non-Governmental Organization' = '#B28C32',
                                  'State Department of Conservation' = '#184E60',
                                  'Army Corps of Engineers' = '#FCA68C'))  +
@@ -138,8 +137,8 @@ chart_basinFederal <- function(data){
 chart_lakeLandFed <- function(data, focal_lakes) {
   
   data <- data |> mutate(MngNm_D = case_when(MngNm_D == "American Indian Lands" ~ "Tribal Land",  TRUE ~ MngNm_D)) %>% # ensure tribal lands are denoted properly 
-    # filter(!str_detect(Label, "0%"))  %>%  # get rid of 0% rows  
-    filter(Mng_Level %in% c("Federal")) # only displaying federal lands 
+    filter(Mng_Level %in% c("Federal")) |> # only displaying federal lands 
+    filter(!str_detect(Label, pattern = "^ 0%")) # remove labels with 0%
   
   data_lake <-  data |> filter(lk_w_st %in% focal_lakes)
   
@@ -206,7 +205,7 @@ map_greatBasin <- function(data, join, zoom) {
                       values = c('Federal' = '#FCA68C',
                                  'Private or Unknown' = '#99A3A4',
                                  'Regional/State/Local' = '#184E60',
-                                 'Tribal Land' = '#001959',
+                                 'Tribal Land' = '#335C4C',
                                  'NGO' = '#B28C32')) +
     labs(fill='') +
     scale_alpha(range = c(0.5, 1)) +
@@ -247,7 +246,7 @@ ggm2 = lakesData |>
                     values = c('Federal' = '#FCA68C',
                                'Private or Unknown' = '#99A3A4',
                                'Regional/State/Local' = '#184E60',
-                               'Tribal Land' = '#001959',
+                               'Tribal Land' = '#4A876F',
                                'NGO' = '#B28C32')) +
   labs(fill='Management Type') +
   guides(color="none") +
