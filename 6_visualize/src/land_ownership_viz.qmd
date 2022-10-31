@@ -34,23 +34,28 @@ p2_watershedExtByMngNm_grp_pArea <- readRDS("../../1_fetch/out/watershedExtByMng
 p1_saline_lakes_sf <-  readRDS("../../1_fetch/out/saline_lakes_sf.rds")
 p1_watershed_ext_sf <- readRDS("../../1_fetch/out/watershed_ext_sf.rds")
 p1_gbd_bnd <- readRDS("../../1_fetch/out/gbd_bnd.rds")
+
+# Note: select Render to output graphs into pptx format. The pptx will be rendered into 6_vizualize > src. 
 ```
 
 
 # Great Basin
 
 ```{r,  warning=FALSE}
-# Broader groupings 
-greaBasin_map <- map_greatBasin(data = p2_gbd_ByMngNm_reduce, join = p2_gbd_pal, zoom = 7 )
+# map showing land ownership across entirely of great basin
+greatBasin_map <- map_greatBasin(data = p2_gbd_ByMngNm_reduce, join = p2_gbd_pal, zoom = 7 )
+# chart of % land ownership across great basin
 greatBasin_chart <- chart_greatBasinLand(data = p2_gbdByMngNm_grp_pArea)
-greatBasin_inset <- map_basin_inset(data_gbd = p1_gbd_bnd, data_lakes = p1_saline_lakes_sf,proj = st_crs(p1_gbd_bnd))
+# small inset that show lake centroids across the great basin 
+greatBasin_inset <- map_basin_inset(data_gbd = p1_gbd_bnd, data_lakes = p1_saline_lakes_sf,proj = st_crs(p1_gbd_bnd)) 
 
-combine <- plot_grid(greaBasin_map+ theme(legend.position = 'bottom'),
-          greatBasin_chart,rel_widths = c(0.91, 0.93), align = "h")
+combine <- plot_grid(greatBasin_map+ theme(legend.position = 'bottom'),
+          greatBasin_chart,rel_widths = c(0.91, 0.93), align = "h") 
 
 gg_inset_map1 = ggdraw() +
   draw_plot(combine) +
-  draw_plot(greatBasin_inset, x= -0.005, y = 0.127, width = 0.18, height = 0.175)
+  # inset locations can be finicky for each graph - may need to adjust x and y locations 
+  draw_plot(greatBasin_inset, x= -0.005, y = 0.127, width = 0.18, height = 0.175) 
 
 gg_inset_map1
 ```
@@ -78,6 +83,7 @@ gg_inset_mapFed
 ```{r,  warning=FALSE}
 lakeCarson_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Carson Lake,NV'))
 lakeCarson_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Carson Lake,NV'))
+# insets for lake level show filled lake placement within the watershed
 lakeCarson_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Carson Lake,NV'), proj = st_crs(p1_gbd_bnd))
 
@@ -109,7 +115,6 @@ gg_inset_map2Fed
 
 ```{r,  warning=FALSE}
 lakeEagle_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Eagle Lake,CA'))
-## issue here with watershed chart not showing the unknown percentage/bar plot?
 lakeEagle_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Eagle Lake,CA'))
 lakeEagle_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Eagle Lake,CA'), proj = st_crs(p1_gbd_bnd))
