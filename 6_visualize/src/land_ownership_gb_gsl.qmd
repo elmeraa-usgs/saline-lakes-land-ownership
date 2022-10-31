@@ -1,5 +1,5 @@
 ---
-title: "Saline Lakes Land Ownership Visualizations"
+title: "Saline Lakes Land Ownership - Great Basin & Great Salt Lake"
 format: pptx
 editor: visual
 reference-doc: ../src/template.pptx
@@ -34,6 +34,8 @@ p2_watershedExtByMngNm_grp_pArea <- readRDS("../../1_fetch/out/watershedExtByMng
 p1_saline_lakes_sf <-  readRDS("../../1_fetch/out/saline_lakes_sf.rds")
 p1_watershed_ext_sf <- readRDS("../../1_fetch/out/watershed_ext_sf.rds")
 p1_gbd_bnd <- readRDS("../../1_fetch/out/gbd_bnd.rds")
+
+# Note: select Render to output graphs into pptx format. The pptx will be rendered into 6_vizualize > src. 
 ```
 
 
