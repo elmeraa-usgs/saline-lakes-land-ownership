@@ -17,18 +17,18 @@ chart_greatBasinLand <- function(data) {
               aes(fill = MngGroup)) +
     coord_flip() +
     scale_fill_manual("",
-                      values = c('Bureau of Land Management' = '#FCA68C',
+                      values = c('Bureau of Land Management' = '#b3b691',
                                  'Unknown' = '#99A3A4',
-                                 'Forest Service' = '#FCA68C',
-                                 'State entities' = '#184E60',
-                                 'Department of Defense' = '#FCA68C',
-                                 'U.S. Fish and Wildlife Service' = '#FCA68C',
-                                 'Tribal Land' = '#335C4C',
-                                 'Municipal entities' = "#184E60",
-                                 'National Park Service' = '#FCA68C',
-                                 'Federal - other' = '#FCA68C',
-                                 'Bureau of Reclamation' = '#FCA68C',
-                                 'NGO' = '#B28C32')) +
+                                 'Forest Service' = '#b3b691',
+                                 'State entities' = '#045d3b',
+                                 'Department of Defense' = '#b3b691',
+                                 'U.S. Fish and Wildlife Service' = '#b3b691',
+                                 'Tribal Land' = '#216a83',
+                                 'Municipal entities' = "#045d3b",
+                                 'National Park Service' = '#b3b691',
+                                 'Federal - other' = '#b3b691',
+                                 'Bureau of Reclamation' = '#b3b691',
+                                 'NGO' = '#c89e3c')) +
     # scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
     # viridis::scale_fill_viridis(discrete = TRUE, option="viridis", direction = -1, end = 0.8) + 
     scale_y_continuous(breaks = seq(0, 70, by = 10), 
@@ -67,31 +67,31 @@ chart_lakeLand <- function(data, focal_lakes) {
     geom_rect(data = data_lake |> distinct(Mng_Level, MngNm_D, Proportion),
               aes(fill = MngNm_D),
               ymin = -3, ymax = -1,
-              xmin = seq(0.545, as.numeric(paste(nrow(data_lake) - 0.455))), xmax = seq(1.455, as.numeric(paste(nrow(data_lake) + 0.455))),
+              xmin = seq(0.545, as.numeric(paste(length(unique(data_lake$MngNm_D)))) - 0.455), xmax = seq(1.455, as.numeric(paste(length(unique(data_lake$MngNm_D)))) + 0.455),
               position = position_dodge2(reverse = TRUE)) +
     scale_fill_manual("",
-                      values = c('Bureau of Land Management' = '#FCA68C',
-                                 'Bureau of Reclamation' = '#FCA68C', 
+                      values = c('Bureau of Land Management' = '#b3b691',
+                                 'Bureau of Reclamation' = '#b3b691', 
                                  'Unknown' = '#99A3A4',
                                  'Private' = '#99A3A4',
-                                 'Forest Service' = '#FCA68C',
-                                 'State Department of Natural Resources' = '#184E60',
-                                 'Department of Defense' = '#FCA68C',
-                                 'State Land Board' = '#184E60', 
-                                 'State Fish and Wildlife' = '#184E60', 
-                                 'U.S. Fish and Wildlife Service' = '#FCA68C',
-                                 'National Park Service' = '#FCA68C',
-                                 'State Park and Recreation' = '#184E60',
-                                 'State Department of Land' = '#184E60', 
-                                 'Natural Resources Conservation Service' = '#FCA68C',
-                                 'City Land' = '#184E60', 
-                                 'Other or Unknown Local Government' = '#184E60',
-                                 'Other or Unknown State Land'  = '#184E60',
-                                 'County Land' = '#184E60',
-                                 'Tribal Land' = '#335C4C',
-                                 'Non-Governmental Organization' = '#B28C32',
-                                 'State Department of Conservation' = '#184E60',
-                                 'Army Corps of Engineers' = '#FCA68C'))  +
+                                 'Forest Service' = '#b3b691',
+                                 'State Department of Natural Resources' = '#045d3b',
+                                 'Department of Defense' = '#b3b691',
+                                 'State Land Board' = '#045d3b', 
+                                 'State Fish and Wildlife' = '#045d3b', 
+                                 'U.S. Fish and Wildlife Service' = '#b3b691',
+                                 'National Park Service' = '#b3b691',
+                                 'State Park and Recreation' = '#045d3b',
+                                 'State Department of Land' = '#045d3b', 
+                                 'Natural Resources Conservation Service' = '#b3b691',
+                                 'City Land' = '#045d3b', 
+                                 'Other or Unknown Local Government' = '#045d3b',
+                                 'Other or Unknown State Land'  = '#045d3b',
+                                 'County Land' = '#045d3b',
+                                 'Tribal Land' = '#216a83',
+                                 'Non-Governmental Organization' = '#c89e3c',
+                                 'State Department of Conservation' = '#045d3b',
+                                 'Army Corps of Engineers' = '#b3b691'))  +
     coord_flip() +
     theme_minimal() +
     labs(title= "Percent of land within lake watershed",
@@ -119,8 +119,15 @@ chart_basinFederal <- function(data){
               aes(fill = MngGroup)) +
     coord_flip() +
     #scale_fill_manual(values = newcolors) + 
-    scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
+    # scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
     # viridis::scale_fill_viridis(discrete = TRUE, option="mako", direction = -1, begin = 0.3, end = 0.9) + 
+    scale_fill_manual("",
+                      values = c('Bureau of Land Management' = '#b3b691',
+                                 'Forest Service' = '#045d3b',
+                                 'Department of Defense' = '#216a83',
+                                 'U.S. Fish and Wildlife Service' = '#c89e3c',
+                                 'National Park Service' = '#7A5C12',
+                                 'Bureau of Reclamation' = '#b65616')) + 
     scale_y_continuous(breaks = seq(0, 70, by = 10), 
                        limits = c(NA, 75), 
                        position  = 'right') + 
@@ -159,7 +166,15 @@ chart_lakeLandFed <- function(data, focal_lakes) {
               ymin = -3, ymax = -1,
               xmin = seq(0.545, as.numeric(paste(nrow(data_lake) - 0.455))), xmax = seq(1.455, as.numeric(paste(nrow(data_lake) + 0.455))),
               position = position_dodge2(reverse = TRUE)) +
-    scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) + 
+    # scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) + 
+    scale_fill_manual("",
+                      values = c('Bureau of Land Management' = '#b3b691',
+                                 'Forest Service' = '#045d3b',
+                                 'Department of Defense' = '#216a83',
+                                 'U.S. Fish and Wildlife Service' = '#c89e3c',
+                                 'National Park Service' = '#7A5C12',
+                                 'Bureau of Reclamation' = '#b65616',
+                                 'Federal - other' = '#b81469')) + 
     coord_flip() +
     theme_minimal() +
     labs(title= "Percent of federal land within lake watershed",
@@ -171,7 +186,7 @@ chart_lakeLandFed <- function(data, focal_lakes) {
 }
 
 ## MAPS 
-map_greatBasin <- function(data, join, zoom) {
+map_greatBasin <- function(data, data_gbd_outline, join, zoom) {
   
   basemap <- maptiles::get_tiles(x = data, provider = "CartoDB.PositronNoLabels", crop = T, verbose = T, zoom = zoom, forceDownload = T)
   
@@ -184,16 +199,21 @@ ggm1 = ggplot(data_join) +
       aes(fill = Mng_Level),
       color = NA,
       inherit.aes = FALSE) +
+  geom_sf(data = data_gbd_outline %>% ms_simplify(),
+          fill = NA, 
+          color = 'black',
+          inherit.aes = FALSE,
+          alpha = 0.5) + 
     coord_sf() + 
     # scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
     # viridis::scale_fill_viridis(discrete = TRUE, option="viridis", direction = -1, end = 0.8) + 
     #scale_fill_manual(values = col_pal, breaks = breaks, labels = labels) +
     scale_fill_manual("",
-                      values = c('Federal' = '#FCA68C',
-                                 'Private or Unknown' = '#99A3A4',
-                                 'Regional/State/Local' = '#184E60',
-                                 'Tribal Land' = '#335C4C',
-                                 'NGO' = '#B28C32')) +
+                      values = c('Federal' = '#b3b691',
+                                 'Private or Unknown' = '#788687',
+                                 'Regional/State/Local' = '#045d3b',
+                                 'Tribal Land' = '#216a83',
+                                 'NGO' = '#c89e3c')) +
     labs(fill='') +
     scale_alpha(range = c(0.5, 1)) +
     guides() +
@@ -209,7 +229,7 @@ ggm1 = ggplot(data_join) +
 }
 
 
-map_lake <- function(data, focal_lakes, join, zoom) {
+map_lake <- function(data, focal_lakes,data_watershed_outline, join, zoom) {
   
 lakesData <- data |>
   filter(lk_w_st %in% focal_lakes)
@@ -223,17 +243,22 @@ ggm2 = lakesData |>
   geom_sf(
     aes(fill = Mng_Level), 
     color = NA, size = 0.2) + 
+  geom_sf(data = data_watershed_outline |> filter(lk_w_st %in% focal_lakes) %>% ms_simplify(),
+          fill = NA, 
+          color = 'black',
+          inherit.aes = FALSE,
+          alpha = 0.5) + 
   #geom_sf(data = saline_lakes |> filter(lk_w_st %in% focal_lakes), 
   #       fill = '#b2d8d8') +
   coord_sf() + 
   # scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
   # viridis::scale_fill_viridis(discrete = TRUE, option="viridis", direction = -1, end = 0.8) + 
   scale_fill_manual("",
-                    values = c('Federal' = '#FCA68C',
-                               'Private or Unknown' = '#99A3A4',
-                               'Regional/State/Local' = '#184E60',
-                               'Tribal Land' = '#4A876F',
-                               'NGO' = '#B28C32')) +
+                    values = c('Federal' = '#b3b691',
+                               'Private or Unknown' = '#788687',
+                               'Regional/State/Local' = '#045d3b',
+                               'Tribal Land' = '#216a83',
+                               'NGO' = '#c89e3c')) +
   labs(fill='Management Type') +
   guides(color="none") +
   theme_void() +
@@ -270,7 +295,20 @@ map_basin_inset <- function(data_gbd, data_lakes, proj) {
     # geom_sf(data = data_lakes,
     #         fill = "#D6EAF8", color = 'black', alpha=0.5) +
     coord_sf() +
-    theme_void() 
+    theme(axis.text.y   = element_blank(),
+          axis.text.x   = element_blank(),
+          axis.title.y  = element_blank(),
+          axis.title.x  = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          axis.line = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_blank(),
+          plot.margin = margin(0, 0, 0, 0, "cm"),
+          panel.border = element_rect(color = "black", fill=NA, size=0.75)
+    )
+  
 }
 
 
@@ -299,7 +337,19 @@ map_lake_inset <- function(data_gbd, data_lakes, data_watershed, focal_lakes, pr
     geom_sf(data = data_lakes |> filter(lk_w_st %in% focal_lakes) %>%  ms_simplify(),
             fill = "black", color = NA) + 
     coord_sf() +
-    theme_void() 
+    theme(axis.text.y   = element_blank(),
+          axis.text.x   = element_blank(),
+          axis.title.y  = element_blank(),
+          axis.title.x  = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          axis.line = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_blank(),
+          plot.margin = margin(0, 0, 0, 0, "cm"),
+          panel.border = element_rect(color = "black", fill=NA, size=0.75)
+    )
 
   
 }
@@ -323,8 +373,15 @@ map_greatBasinFederal <- function(data,data_gbd_outline, join, zoom) {
             color = 'black',
             inherit.aes = FALSE,
             alpha = 0.5) + 
-    scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
+    # scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
     # viridis::scale_fill_viridis(discrete = TRUE, option="mako", direction = -1, begin = 0.3, end = 0.9) + 
+    scale_fill_manual("",
+                      values = c('Bureau of Land Management' = '#b3b691',
+                                 'Forest Service' = '#045d3b',
+                                 'Department of Defense' = '#216a83',
+                                 'U.S. Fish and Wildlife Service' = '#c89e3c',
+                                 'National Park Service' = '#7A5C12',
+                                 'Bureau of Reclamation' = '#b65616')) + 
     labs(fill='') +
     scale_alpha(range = c(0.5, 1)) +
     guides() +
@@ -363,8 +420,16 @@ map_lakeFederal <- function(data, focal_lakes,data_watershed_outline, join, zoom
     #geom_sf(data = saline_lakes |> filter(lk_w_st %in% focal_lakes), 
     #       fill = '#b2d8d8') +
     coord_sf() + 
-    scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
+    # scale_fill_scico_d(palette = 'batlow', direction = -1, end = 0.8) +
     # viridis::scale_fill_viridis(discrete = TRUE, option="viridis", direction = -1, end = 0.8) + 
+    scale_fill_manual("",
+                      values = c('Bureau of Land Management' = '#b3b691',
+                                 'Forest Service' = '#045d3b',
+                                 'Department of Defense' = '#216a83',
+                                 'U.S. Fish and Wildlife Service' = '#c89e3c',
+                                 'National Park Service' = '#7A5C12',
+                                 'Bureau of Reclamation' = '#b65616',
+                                 'Federal - other' = '#b81469')) + 
     labs(fill='Management Type') +
     guides(color="none") +
     theme_void() +
