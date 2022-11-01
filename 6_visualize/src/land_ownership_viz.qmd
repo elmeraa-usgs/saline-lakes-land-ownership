@@ -43,7 +43,7 @@ p1_gbd_bnd <- readRDS("../../1_fetch/out/gbd_bnd.rds")
 
 ```{r,  warning=FALSE}
 # map showing land ownership across entirely of great basin
-greatBasin_map <- map_greatBasin(data = p2_gbd_ByMngNm_reduce, join = p2_gbd_pal, zoom = 7 )
+greatBasin_map <- map_greatBasin(data = p2_gbd_ByMngNm_reduce, data_gbd_outline =p1_gbd_bnd, join = p2_gbd_pal, zoom = 7 )
 # chart of % land ownership across great basin
 greatBasin_chart <- chart_greatBasinLand(data = p2_gbdByMngNm_grp_pArea)
 # small inset that show lake centroids across the great basin 
@@ -55,7 +55,7 @@ combine <- plot_grid(greatBasin_map+ theme(legend.position = 'bottom'),
 gg_inset_map1 = ggdraw() +
   draw_plot(combine) +
   # inset locations can be finicky for each graph - may need to adjust x and y locations 
-  draw_plot(greatBasin_inset, x= -0.005, y = 0.127, width = 0.18, height = 0.175) 
+  draw_plot(greatBasin_inset, x= -0.007, y = 0.111, width = 0.18, height = 0.175)
 
 gg_inset_map1
 ```
@@ -72,7 +72,7 @@ combineFed <- plot_grid(greaBasin_mapFed+ theme(legend.position = 'none'),
 
 gg_inset_mapFed = ggdraw() +
   draw_plot(combineFed) +
-  draw_plot(greatBasin_inset, x= -0.0015, y = 0.078, width = 0.18, height = 0.175)
+  draw_plot(greatBasin_inset, x= -0.0015, y = 0.059, width = 0.18, height = 0.175)
 
 gg_inset_mapFed
 
@@ -81,7 +81,7 @@ gg_inset_mapFed
 # Carson Lake, NV
 
 ```{r,  warning=FALSE}
-lakeCarson_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Carson Lake,NV'))
+lakeCarson_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Carson Lake,NV'))
 lakeCarson_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Carson Lake,NV'))
 # insets for lake level show filled lake placement within the watershed
 lakeCarson_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
@@ -110,11 +110,42 @@ gg_inset_map2Fed = ggdraw() +
 gg_inset_map2Fed 
 ```
 
+# Carson Sink, NV
+
+```{r,  warning=FALSE}
+lakeCarson_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Carson Sink,NV'))
+lakeCarson_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Carson Sink,NV'))
+# insets for lake level show filled lake placement within the watershed
+lakeCarson_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
+                                   data_watershed = p1_watershed_ext_sf, focal_lakes = c('Carson Sink,NV'), proj = st_crs(p1_gbd_bnd))
+
+combine <- plot_grid(lakeCarson_map+ theme(legend.position = 'bottom'), lakeCarson_chart,rel_widths = c(1.18, 1.25))
+
+gg_inset_map2 = ggdraw() +
+  draw_plot(combine) +
+  draw_plot(lakeCarson_inset, x= 0.305, y = 0.12, width = 0.15, height = 0.15)
+
+gg_inset_map2
+```
+
+# Carson Sink, NV - Federal Lands
+```{r}
+lakeCarson_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce,data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Carson Sink,NV'))
+lakeCarson_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Carson Sink,NV'))
+
+combineFed <- plot_grid(lakeCarson_mapFed+ theme(legend.position = 'none'), lakeCarson_chartFed,rel_widths = c(1.18, 1.25))
+
+gg_inset_map2Fed = ggdraw() +
+  draw_plot(combineFed) +
+  draw_plot(lakeCarson_inset, x= 0.310, y = 0.06, width = 0.15, height = 0.15)
+
+gg_inset_map2Fed 
+```
 
 # Eagle Lake, CA 
 
 ```{r,  warning=FALSE}
-lakeEagle_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Eagle Lake,CA'))
+lakeEagle_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Eagle Lake,CA'))
 lakeEagle_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Eagle Lake,CA'))
 lakeEagle_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Eagle Lake,CA'), proj = st_crs(p1_gbd_bnd))
@@ -124,7 +155,7 @@ combine <- plot_grid(lakeEagle_map+ theme(legend.position = 'bottom'), lakeEagle
 
 gg_inset_map3 = ggdraw() +
   draw_plot(combine) +
-  draw_plot(lakeEagle_inset, x= 0.363, y = 0.220, width = 0.15, height = 0.15)
+  draw_plot(lakeEagle_inset, x= 0.378, y = 0.215, width = 0.125, height = 0.125)
 
 gg_inset_map3
 
@@ -140,7 +171,7 @@ combineFed <- plot_grid(lakeEagle_mapFed+ theme(legend.position = 'none'), lakeE
 
 gg_inset_map3Fed = ggdraw() +
   draw_plot(combineFed) +
-  draw_plot(lakeEagle_inset, x= 0.341, y = 0.195, width = 0.15, height = 0.15)
+  draw_plot(lakeEagle_inset, x= 0.356, y = 0.190, width = 0.125, height = 0.125)
 
 gg_inset_map3Fed 
 ```
@@ -148,7 +179,7 @@ gg_inset_map3Fed
 # Franklin Lake, NV
 
 ```{r,  warning=FALSE}
-lakeFranklin_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Franklin Lake,NV'))
+lakeFranklin_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Franklin Lake,NV'))
 lakeFranklin_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Franklin Lake,NV'))
 lakeFranklin_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Franklin Lake,NV'), proj = st_crs(p1_gbd_bnd))
@@ -183,7 +214,7 @@ gg_inset_map4Fed
 # Goose Lake, CA
 
 ```{r,  warning=FALSE}
-lakeGoose_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Goose Lake,CA'))
+lakeGoose_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Goose Lake,CA'))
 lakeGoose_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Goose Lake,CA'))
 lakeGoose_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Goose Lake,CA'), proj = st_crs(p1_gbd_bnd))
@@ -216,7 +247,7 @@ gg_inset_map5Fed
 # Great Salt Lake, UT
 
 ```{r,  warning=FALSE}
-lakeGreatSalt_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Great Salt Lake,UT'))
+lakeGreatSalt_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Great Salt Lake,UT'))
 lakeGreatSalt_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Great Salt Lake,UT'))
 lakeGreatSalt_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Great Salt Lake,UT'), proj = st_crs(p1_gbd_bnd))
@@ -249,7 +280,7 @@ gg_inset_map6Fed
 # Harney Lake, OR
 
 ```{r,  warning=FALSE}
-lakeHarney_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Harney Lake,OR'))
+lakeHarney_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Harney Lake,OR'))
 lakeHarney_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Harney Lake,OR'))
 lakeHarney_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Harney Lake,OR'), proj = st_crs(p1_gbd_bnd))
@@ -282,7 +313,7 @@ gg_inset_map7Fed
 # Honey Lake, CA
 
 ```{r,  warning=FALSE}
-lakeHoney_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Honey Lake,CA'))
+lakeHoney_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Honey Lake,CA'))
 lakeHoney_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Honey Lake,CA'))
 lakeHoney_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Honey Lake,CA'), proj = st_crs(p1_gbd_bnd))
@@ -314,7 +345,7 @@ gg_inset_map8Fed
 # Lake Abert, OR
 
 ```{r,  warning=FALSE}
-lakeAbert_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Lake Abert,OR'))
+lakeAbert_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Lake Abert,OR'))
 lakeAbert_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Lake Abert,OR'))
 lakeAbert_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Lake Abert,OR'), proj = st_crs(p1_gbd_bnd))
@@ -323,7 +354,7 @@ combine <- plot_grid(lakeAbert_map+ theme(legend.position = 'bottom'), lakeAbert
 
 gg_inset_map9 = ggdraw() +
   draw_plot(combine) +
-  draw_plot(lakeAbert_inset, x= 0.038, y = 0.119, width = 0.15, height = 0.15)
+  draw_plot(lakeAbert_inset, x= 0.029, y = 0.099, width = 0.15, height = 0.15)
 
 gg_inset_map9
 ```
@@ -338,7 +369,7 @@ combineFed <- plot_grid(lakeAbert_mapFed+ theme(legend.position = 'none'), lakeA
 
 gg_inset_map9Fed = ggdraw() +
   draw_plot(combineFed) +
-  draw_plot(lakeAbert_inset, x= 0.020, y = 0.070, width = 0.15, height = 0.15)
+  draw_plot(lakeAbert_inset, x= 0.012, y = 0.055, width = 0.15, height = 0.15)
 
 gg_inset_map9Fed 
 ```
@@ -346,7 +377,7 @@ gg_inset_map9Fed
 # Malheur Lake, OR
 
 ```{r,  warning=FALSE}
-lakeMalheur_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Malheur Lake,OR'))
+lakeMalheur_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Malheur Lake,OR'))
 lakeMalheur_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Malheur Lake,OR'))
 lakeMalheur_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Malheur Lake,OR'), proj = st_crs(p1_gbd_bnd))
@@ -378,7 +409,7 @@ gg_inset_map10Fed
 # Mono Lake, CA
 
 ```{r,  warning=FALSE}
-lakeMono_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Mono Lake,CA'))
+lakeMono_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Mono Lake,CA'))
 lakeMono_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Mono Lake,CA'))
 lakeMono_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Mono Lake,CA'), proj = st_crs(p1_gbd_bnd))
@@ -410,7 +441,7 @@ gg_inset_map11Fed
 # Owens Lake, CA
 
 ```{r,  warning=FALSE}
-lakeOwens_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Owens Lake,CA'))
+lakeOwens_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Owens Lake,CA'))
 lakeOwens_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Owens Lake,CA'))
 lakeOwens_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Owens Lake,CA'), proj = st_crs(p1_gbd_bnd))
@@ -442,7 +473,7 @@ gg_inset_map12Fed
 # Pyramid Lake, NV
 
 ```{r,  warning=FALSE}
-lakePyramid_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Pyramid Lake,NV'))
+lakePyramid_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Pyramid Lake,NV'))
 lakePyramid_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Pyramid Lake,NV'))
 lakePyramid_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Pyramid Lake,NV'), proj = st_crs(p1_gbd_bnd))
@@ -474,7 +505,7 @@ gg_inset_map13Fed
 # Ruby Lake, NV
 
 ```{r,  warning=FALSE}
-lakeRuby_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Ruby Lake,NV'))
+lakeRuby_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Ruby Lake,NV'))
 lakeRuby_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Ruby Lake,NV'))
 lakeRuby_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Ruby Lake,NV'), proj = st_crs(p1_gbd_bnd))
@@ -504,7 +535,7 @@ gg_inset_map14Fed
 # Sevier Lake, UT
 
 ```{r,  warning=FALSE}
-lakeSevier_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Sevier Lake,UT'))
+lakeSevier_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf,  join = p2_gbd_pal, zoom = 9, focal_lakes = c('Sevier Lake,UT'))
 lakeSevier_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Sevier Lake,UT'))
 lakeSevier_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Sevier Lake,UT'), proj = st_crs(p1_gbd_bnd))
@@ -535,7 +566,7 @@ gg_inset_map15Fed
 # Silver Lake, OR
 
 ```{r,  warning=FALSE}
-lakeSilver_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Silver Lake,OR'))
+lakeSilver_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Silver Lake,OR'))
 lakeSilver_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Silver Lake,OR'))
 lakeSilver_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Silver Lake,OR'), proj = st_crs(p1_gbd_bnd))
@@ -568,7 +599,7 @@ gg_inset_map16Fed
 # Summer Lake, OR
 
 ```{r,  warning=FALSE}
-lakeSummer_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Summer Lake,OR'))
+lakeSummer_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce,data_watershed_outline= p1_watershed_ext_sf,  join = p2_gbd_pal, zoom = 9, focal_lakes = c('Summer Lake,OR'))
 lakeSummer_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Summer Lake,OR'))
 lakeSummer_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Summer Lake,OR'), proj = st_crs(p1_gbd_bnd))
@@ -577,7 +608,7 @@ combine <- plot_grid(lakeSummer_map + theme(legend.position = 'bottom'), lakeSum
 
 gg_inset_map17 = ggdraw() +
   draw_plot(combine) +
-  draw_plot(lakeSummer_inset, x= 0.278, y = 0.093, width = 0.15, height = 0.15)
+  draw_plot(lakeSummer_inset, x= 0.290, y = 0.093, width = 0.125, height = 0.125)
 
 gg_inset_map17
 
@@ -593,7 +624,7 @@ combineFed <- plot_grid(lakeSummer_mapFed+ theme(legend.position = 'none'), lake
 
 gg_inset_map17Fed = ggdraw() +
   draw_plot(combineFed) +
-  draw_plot(lakeSummer_inset, x= 0.275, y = 0.049, width = 0.15, height = 0.15)
+  draw_plot(lakeSummer_inset, x= 0.288, y = 0.049, width = 0.125, height = 0.125)
 
 gg_inset_map17Fed 
 ```
@@ -601,7 +632,7 @@ gg_inset_map17Fed
 # Walker Lake, NV
 
 ```{r,  warning=FALSE}
-lakeWalker_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Walker Lake,NV'))
+lakeWalker_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce,data_watershed_outline= p1_watershed_ext_sf,  join = p2_gbd_pal, zoom = 9, focal_lakes = c('Walker Lake,NV'))
 lakeWalker_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Walker Lake,NV'))
 lakeWalker_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Walker Lake,NV'), proj = st_crs(p1_gbd_bnd))
@@ -610,13 +641,13 @@ combine<- plot_grid(lakeWalker_map + theme(legend.position = 'bottom'), lakeWalk
 
 gg_inset_map18 = ggdraw() +
   draw_plot(combine) +
-  draw_plot(lakeWalker_inset, x= 0.329, y = 0.109, width = 0.15, height = 0.15)
+  draw_plot(lakeWalker_inset, x= 0.344, y = 0.109, width = 0.125, height = 0.125)
 
 gg_inset_map18
 ```
 
 
-# Walker Lake, NV- Federal Lands
+# Walker Lake, NV - Federal Lands
 
 ```{r}
 lakeWalker_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Walker Lake,NV'))
@@ -625,15 +656,16 @@ lakeWalker_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea
 combineFed <- plot_grid(lakeWalker_mapFed+ theme(legend.position = 'none'), lakeWalker_chartFed,rel_widths = c(0.60, 0.65), rel_heights = c(0.55, 0.55))
 gg_inset_map18Fed = ggdraw() +
   draw_plot(combineFed) + 
-  draw_plot(lakeWalker_inset, x= 0.328, y = 0.058, width = 0.15, height = 0.15)
+  draw_plot(lakeWalker_inset, x= 0.343, y = 0.058, width = 0.125, height = 0.125)
  
 gg_inset_map18Fed 
 ```
 
+
 # Warner Lake, OR
 
 ```{r,  warning=FALSE}
-lakeWarner_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Warner Lake,OR'))
+lakeWarner_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Warner Lake,OR'))
 lakeWarner_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Warner Lake,OR'))
 lakeWarner_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Warner Lake,OR'), proj = st_crs(p1_gbd_bnd))
@@ -664,7 +696,7 @@ gg_inset_map19Fed
 # Winnemucca Lake, NV
 
 ```{r,  warning=FALSE}
-lakeWinnemucca_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Winnemucca Lake,NV'))
+lakeWinnemucca_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Winnemucca Lake,NV'))
 lakeWinnemucca_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Winnemucca Lake,NV'))
 lakeWinnemucca_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Winnemucca Lake,NV'), proj = st_crs(p1_gbd_bnd))
@@ -673,12 +705,13 @@ combine <- plot_grid(lakeWinnemucca_map + theme(legend.position = 'bottom'), lak
 
 gg_inset_map20 = ggdraw() +
   draw_plot(combine) +
-  draw_plot(lakeWinnemucca_inset, x= 0.120, y = 0.099, width = 0.125, height = 0.125)
+  draw_plot(lakeWinnemucca_inset, x= 0.111, y = 0.099, width = 0.125, height = 0.125)
 
 gg_inset_map20
 ```
 
 # Winnemucca Lake, NV - Federal Lands
+
 ```{r}
 lakeWinnemucca_mapFed <- map_lakeFederal(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Winnemucca Lake,NV'))
 lakeWinnemucca_chartFed <- chart_lakeLandFed(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Winnemucca Lake,NV'))
@@ -687,7 +720,7 @@ combineFed <- plot_grid(lakeWinnemucca_mapFed + theme(legend.position = 'none'),
 
 gg_inset_map20Fed = ggdraw() +
   draw_plot(combineFed) +
-  draw_plot(lakeWinnemucca_inset,x= 0.095, y = 0.046, width = 0.15, height = 0.15)
+  draw_plot(lakeWinnemucca_inset,x= 0.101, y = 0.046, width = 0.125, height = 0.125)
 
 gg_inset_map20Fed 
 ```
