@@ -43,16 +43,16 @@ p1_gbd_bnd <- readRDS("../../1_fetch/out/gbd_bnd.rds")
 
 ```{r,  warning=FALSE}
 # Broader groupings 
-greaBasin_map <- map_greatBasin(data = p2_gbd_ByMngNm_reduce, join = p2_gbd_pal, zoom = 7 )
+greatBasin_map <- map_greatBasin(data = p2_gbd_ByMngNm_reduce, data_gbd_outline =p1_gbd_bnd, join = p2_gbd_pal, zoom = 7 )
 greatBasin_chart <- chart_greatBasinLand(data = p2_gbdByMngNm_grp_pArea)
 greatBasin_inset <- map_basin_inset(data_gbd = p1_gbd_bnd, data_lakes = p1_saline_lakes_sf,proj = st_crs(p1_gbd_bnd))
 
-combine <- plot_grid(greaBasin_map+ theme(legend.position = 'bottom'),
+combine <- plot_grid(greatBasin_map+ theme(legend.position = 'bottom'),
           greatBasin_chart,rel_widths = c(0.91, 0.93), align = "h")
 
 gg_inset_map1 = ggdraw() +
   draw_plot(combine) +
-  draw_plot(greatBasin_inset, x= -0.005, y = 0.127, width = 0.18, height = 0.175)
+  draw_plot(greatBasin_inset, x= -0.007, y = 0.111, width = 0.18, height = 0.175)
 
 gg_inset_map1
 ```
@@ -69,7 +69,7 @@ combineFed <- plot_grid(greaBasin_mapFed+ theme(legend.position = 'none'),
 
 gg_inset_mapFed = ggdraw() +
   draw_plot(combineFed) +
-  draw_plot(greatBasin_inset, x= -0.0015, y = 0.078, width = 0.18, height = 0.175)
+  draw_plot(greatBasin_inset, x= -0.0015, y = 0.059, width = 0.18, height = 0.175)
 
 gg_inset_mapFed
 
@@ -78,7 +78,7 @@ gg_inset_mapFed
 # Great Salt Lake, UT
 
 ```{r,  warning=FALSE}
-lakeGreatSalt_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Great Salt Lake,UT'))
+lakeGreatSalt_map <- map_lake(data = p2_watershedExt_ByMngNm_reduce, data_watershed_outline= p1_watershed_ext_sf, join = p2_gbd_pal, zoom = 9, focal_lakes = c('Great Salt Lake,UT'))
 lakeGreatSalt_chart <- chart_lakeLand(data = p2_watershedExtByMngNm_grp_pArea, focal_lakes = c('Great Salt Lake,UT'))
 lakeGreatSalt_inset <- map_lake_inset(data_gbd=p1_gbd_bnd, data_lakes= p1_saline_lakes_sf, 
                                    data_watershed = p1_watershed_ext_sf, focal_lakes = c('Great Salt Lake,UT'), proj = st_crs(p1_gbd_bnd))
